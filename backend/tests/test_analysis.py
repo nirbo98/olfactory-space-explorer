@@ -63,3 +63,21 @@ def test_inverse_optimization_respects_bounds(model, dataset):
     assert hist.shape == (4, 60)
     assert hist[:, -1].min() <= hist[:, 0].min() + 1e-6
     assert all(p.requires_grad for p in model.parameters())          # model left intact
+
+
+def test_write_fourier_fixture():
+    """Fixture for the in-browser (static build) DFT twin in frontend/src/mathematics/fourier.ts."""
+    import json
+    from pathlib import Path
+    out = Path(__file__).resolve().parents[2] / "frontend" / "src" / "mathematics" / "__fixtures__" / "fourier_fixture.json"
+    dt = 4.0 / 120
+    t = np.arange(120) * dt
+    cases = []
+    for sig, band in [(0.8 * np.sin(2 * np.pi * 3 * t) + 0.3 * np.sin(2 * np.pi * 7 * t) + 0.5, [2.5, 3.5]),
+                      (np.exp(-((t - 1.5) ** 2) / 0.1) * (1 + 0.3 * np.cos(2 * np.pi * 4 * t)), [0.0, 6.0])]:
+        r = analyze(sig, dt, band=tuple(band))
+        cases.append({"signal": sig.tolist(), "dt": dt, "band": band, "expected": r})
+    sig = np.random.default_rng(0).normal(size=33)  # odd length
+    cases.append({"signal": sig.tolist(), "dt": 0.1, "band": [1.0, 3.0], "expected": analyze(sig, 0.1, band=(1.0, 3.0))})
+    out.write_text(json.dumps(cases))
+    assert out.exists()

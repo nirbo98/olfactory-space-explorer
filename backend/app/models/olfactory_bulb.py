@@ -54,13 +54,16 @@ class OlfactoryBulb(nn.Module):
     def tau(self) -> torch.Tensor:
         return self.tau_min + (self.tau_max - self.tau_min) * torch.sigmoid(self.tau_raw)
 
-    def drive(self, r: torch.Tensor, lateral_inhibition: bool | None = None) -> torch.Tensor:
-        """Instantaneous bulb drive b for receptor activity r [..., R] → [..., D]."""
+    def drive(self, r: torch.Tensor, lateral_inhibition: bool | float | torch.Tensor | None = None) -> torch.Tensor:
+        """Instantaneous bulb drive b for receptor activity r [..., R] → [..., D].
+
+        `lateral_inhibition` may be a bool or a 0/1 tensor (the latter keeps exported graphs switchable).
+        """
         lat = self.lateral_inhibition if lateral_inhibition is None else lateral_inhibition
+        if isinstance(lat, bool):
+            lat = 1.0 if lat else 0.0
         r_hat = r / (1.0 + F.softplus(self.kappa_raw) * r.mean(dim=-1, keepdim=True))
-        pre = r_hat @ self.W_E.T + self.b0
-        if lat:
-            pre = pre - r_hat @ self.W_I.T
+        pre = r_hat @ self.W_E.T + self.b0 - lat * (r_hat @ self.W_I.T)
         return F.softplus(pre)
 
     def integrate(self, b_seq: torch.Tensor, dt: float, h0: torch.Tensor | None = None) -> torch.Tensor:

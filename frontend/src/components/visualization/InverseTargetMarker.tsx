@@ -7,6 +7,7 @@ import { liftDisplacement } from '../../mathematics/projection'
 import { useInverseDesignStore } from '../../store/inverseDesignStore'
 import { TARGET } from '../../utils/colors'
 import { sceneShared } from './sharedScene'
+import { STATIC_MODE } from '../../services/mode'
 
 /**
  * Inverse-design target. Dragging moves the target in 3-D; the new latent target is
@@ -36,7 +37,7 @@ export function InverseTargetMarker() {
     }
   })
   if (!pos || !proj || !z) return null
-  const canDrag = !proj.warnings.some((w) => w.startsWith('degenerate') || w.startsWith('dependent'))
+  const canDrag = !STATIC_MODE && !proj.warnings.some((w) => w.startsWith('degenerate') || w.startsWith('dependent'))
 
   const onDragEnd = () => {
     const t = new THREE.Vector3().setFromMatrixPosition(drag.current)

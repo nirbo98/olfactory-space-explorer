@@ -35,12 +35,18 @@ Optional extras: `pip install -e "backend[chem]"` (RDKit fingerprints from SMILE
 
 The repository already contains a trained checkpoint and atlas, so `make install && make dev` is enough to see the demo; `make train` reproduces them (seed 42).
 
+## GitHub Pages (static build)
+
+GitHub Pages cannot run the Python server, so the Pages build runs the **same trained checkpoint in the browser**: `make export-static` exports the model to two ONNX graphs (static and 120-frame temporal; parity with PyTorch is tested in `backend/tests/test_onnx_export.py`) plus the atlas, metrics and teacher references into `frontend/public/static/`, and `npm run build:pages` builds a site that uses onnxruntime-web instead of `/api/v1`. On every push to `main`, `.github/workflows/pages.yml` builds and deploys it (Settings → Pages → Source: *GitHub Actions*).
+
+What differs from the local app: simulation, knockouts, ablation switches, playback, FFT (TypeScript DFT checked against numpy) and dose–response run live in the browser; **Taylor analysis** (needs autograd) is precomputed for the default mixture C001 0.5 + C005 0.2 across all 64 receptors, and **inverse design** (gradient-based) is precomputed for 12 target odors with fixed search settings. Target dragging, custom Taylor configurations and custom search parameters require the local backend. Simulation duration is fixed at 4 s / 120 frames.
+
 ## Tests
 
 ```bash
-make test-backend    # pytest: 47 tests (model maths, dynamics, projection, Taylor, FFT, inverse bounds, training, API)
-make test-frontend   # tsc + vitest: 25 tests (projection twin vs Python fixture, sliders, controller, playback)
-make test-e2e        # Playwright: 8 browser scenarios on the real app (starts both servers)
+make test-backend    # pytest: 52 tests (model maths, dynamics, projection, Taylor, FFT, inverse bounds, training, API)
+make test-frontend   # tsc + vitest: 28 tests (projection and DFT twins vs Python fixtures, sliders, controller, playback)
+make test-e2e        # Playwright: 8 scenarios on the full app + 2 on the static Pages build
 make test            # all of the above
 ```
 

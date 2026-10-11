@@ -55,6 +55,10 @@ class ReceptorInteractionLayer(nn.Module):
         """conc: [B, N] (static) or [B, T, N] (time series). Returns [B, R] or [B, T, R]."""
         if bool((conc.detach() < 0).any()):
             raise ValueError("concentrations must be non-negative")
+        return self.response_unchecked(conc, K, efficacy, mask, gain)
+
+    def response_unchecked(self, conc, K, efficacy, mask, gain=None):
+        """Same computation without input validation (used for graph export)."""
         m = mask.to(conc.dtype)
         temporal = conc.dim() == 3
         if temporal:

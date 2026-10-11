@@ -9,6 +9,9 @@ import { fmt, translateWarning } from '../../utils/format'
 import { axisProps } from '../charts/chartTheme'
 import { useEffectiveProjection } from '../../hooks/useProjection'
 import { liftDisplacement } from '../../mathematics/projection'
+import { useEffect, useState } from 'react'
+import { STATIC_MODE } from '../../services/mode'
+import { selectSample } from '../../services/actions'
 
 const RUN_COLORS = ['#7ee0ff', '#5b8def', '#3ec7c2', '#d7a54a', '#c26fd6', '#7fbf6a', '#e07a6a', '#9aa7b8']
 
@@ -25,7 +28,11 @@ export function InverseDesignPanel() {
   }
   const lifted = Math.hypot(...inv.liftedDelta) > 1e-6
   const proj = useEffectiveProjection()
-  const canLift = !!proj && !proj.warnings.some((w) => w.startsWith('degenerate') || w.startsWith('dependent'))
+  const [precomputed, setPrecomputed] = useState<string[]>([])
+  useEffect(() => {
+    if (STATIC_MODE) import('../../services/staticBackend').then((m) => m.staticBackend.precomputedInverseTargets()).then(setPrecomputed)
+  }, [])
+  const canLift = !STATIC_MODE && !!proj && !proj.warnings.some((w) => w.startsWith('degenerate') || w.startsWith('dependent'))
   /** Controlled latent modification: z_target = z_base + P⁺Δp for an absolute view-space offset Δp. */
   const setOffset = (k: number, v: number) => {
     if (!proj || !inv.baseEmbedding) return
@@ -47,7 +54,17 @@ export function InverseDesignPanel() {
           <Slider key={a} label={`הזזה מבוקרת Δp ${a}`} value={inv.liftedDelta[k]} min={-3} max={3} step={0.05}
             onChange={(v) => setOffset(k, v)} format={(v) => v.toFixed(2)} testId={`inv-offset-${a.toLowerCase()}`} />
         ))}
-        {!canLift && <div className="warn">ההטלה הנוכחית מנוונת — הרמה הופכית מושבתת.</div>}
+        {!canLift && !STATIC_MODE && <div className="warn">ההטלה הנוכחית מנוונת — הרמה הופכית מושבתת.</div>}
+        {STATIC_MODE && (
+          <div className="space-y-1" data-testid="inverse-static-note">
+            <div className="warn">בגרסת Pages האופטימיזציה (מבוססת גרדיאנט) רצה מראש בשרת עבור המטרות הבאות; הזזת מטרה ופרמטרי חיפוש זמינים בהרצה מקומית.</div>
+            <div className="flex flex-wrap gap-1" dir="ltr">
+              {precomputed.map((id) => (
+                <button key={id} className={`chip ${inv.targetSampleId === id ? 'text-pink-300' : ''}`} onClick={() => selectSample(id)}>{id}</button>
+              ))}
+            </div>
+          </div>
+        )}
         {lifted && <button className="btn" onClick={inv.clearModification}>ביטול ההזזה</button>}
       </Section>
       <Section title="מרחב החיפוש">
@@ -72,7 +89,7 @@ export function InverseDesignPanel() {
           onClick={inv.run} data-testid="inverse-run">
           {inv.status === 'running' ? 'מבצע אופטימיזציה…' : 'הרצת אופטימיזציה מבוססת-מודל'}
         </button>
-        {inv.error && <div className="warn">{inv.error}</div>}
+        {inv.error && <div className="warn">{inv.error === 'STATIC_INVERSE_UNAVAILABLE' ? 'למטרה זו אין תוצאה מחושבת מראש בגרסת Pages — בחרו אחת מהמטרות שלמעלה.' : inv.error}</div>}
       </Section>
       {res && (
         <Section title="מועמדים">

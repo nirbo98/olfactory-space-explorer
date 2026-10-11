@@ -5,7 +5,7 @@ TORCH_INDEX ?= https://download.pytorch.org/whl/cpu
 BACKEND  := backend
 FRONTEND := frontend
 
-.PHONY: help bootstrap install install-backend install-frontend data train evaluate ablations \
+.PHONY: help bootstrap install install-backend install-frontend data train evaluate ablations export-static pages \
         backend frontend dev build test test-backend test-frontend test-e2e clean
 
 help:
@@ -18,7 +18,15 @@ bootstrap: install data train
 
 install: install-backend install-frontend
 
-install-backend:
+install-# Export the trained model to ONNX + static JSON for the GitHub Pages build (needs: pip install onnx onnxscript)
+export-static:
+	cd $(BACKEND) && $(PY) scripts/export_static.py
+
+# Build the static site locally (frontend/dist) and preview it at http://127.0.0.1:4173/olfactory-space-explorer/
+pages:
+	cd $(FRONTEND) && npm run build:pages && npx vite preview --mode pages --host 127.0.0.1 --port 4173
+
+backend:
 	$(PIP) install "torch>=2.2" --index-url $(TORCH_INDEX) || $(PIP) install "torch>=2.2"
 	$(PIP) install -e "$(BACKEND)[dev]"
 
@@ -37,6 +45,14 @@ evaluate:
 ablations:
 	cd $(BACKEND) && $(PY) scripts/run_ablations.py
 
+# Export the trained model to ONNX + static JSON for the GitHub Pages build (needs: pip install onnx onnxscript)
+export-static:
+	cd $(BACKEND) && $(PY) scripts/export_static.py
+
+# Build the static site locally (frontend/dist) and preview it at http://127.0.0.1:4173/olfactory-space-explorer/
+pages:
+	cd $(FRONTEND) && npm run build:pages && npx vite preview --mode pages --host 127.0.0.1 --port 4173
+
 backend:
 	cd $(BACKEND) && $(PY) -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 
@@ -54,7 +70,15 @@ build:
 
 test: test-backend test-frontend test-e2e
 
-test-backend:
+test-# Export the trained model to ONNX + static JSON for the GitHub Pages build (needs: pip install onnx onnxscript)
+export-static:
+	cd $(BACKEND) && $(PY) scripts/export_static.py
+
+# Build the static site locally (frontend/dist) and preview it at http://127.0.0.1:4173/olfactory-space-explorer/
+pages:
+	cd $(FRONTEND) && npm run build:pages && npx vite preview --mode pages --host 127.0.0.1 --port 4173
+
+backend:
 	cd $(BACKEND) && $(PY) -m pytest -q
 
 test-frontend:
@@ -63,7 +87,7 @@ test-frontend:
 # First time only: cd frontend && npx playwright install chromium
 # (or set PW_CHROMIUM_PATH to an existing Chromium binary)
 test-e2e:
-	cd $(FRONTEND) && npx playwright test
+	cd $(FRONTEND) && npx playwright test && npx playwright test -c playwright.static.config.ts
 
 clean:
 	rm -rf $(FRONTEND)/dist $(FRONTEND)/test-results $(BACKEND)/.pytest_cache

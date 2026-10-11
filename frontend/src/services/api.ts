@@ -1,3 +1,4 @@
+import { STATIC_MODE } from './mode'
 import type {
   AtlasResponse, Compound, ConfigResponse, DatasetsResponse, DoseResponse, FourierResponse, InverseResponse,
   MetricsResponse, MixtureComponent, SimulateRequest, SimulateResponse, TaylorResponse,
@@ -30,8 +31,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 const post = <T>(path: string, body: unknown, signal?: AbortSignal) =>
   request<T>(path, { method: 'POST', body: JSON.stringify(body), signal })
 
-/** All backend calls go through this object so tests can replace individual methods. */
-export const api = {
+/** HTTP client for the Python backend (/api/v1). */
+const httpApi = {
   health: () => request<{ status: string; model_status: string }>('/health'),
   config: () => request<ConfigResponse>('/config'),
   atlas: () => request<AtlasResponse>('/atlas'),
@@ -47,5 +48,19 @@ export const api = {
     post<DoseResponse>('/analyze/dose-response', body, signal),
   inverse: (body: Record<string, unknown>, signal?: AbortSignal) => post<InverseResponse>('/inverse-design', body, signal),
 }
+
+
+/**
+ * All backend calls go through this object so tests can replace individual methods.
+ * In the static (GitHub Pages) build every method is served by staticBackend instead.
+ */
+type Methods = typeof httpApi
+const loadStatic = () => import('./staticBackend').then((m) => m.staticBackend)
+export const api: Methods = STATIC_MODE
+  ? (Object.fromEntries(Object.keys(httpApi).map((k) => [k, async (...args: unknown[]) => {
+      const sb = await loadStatic()
+      return (sb[k as keyof typeof sb] as (...a: unknown[]) => unknown)(...args)
+    }])) as unknown as Methods)
+  : httpApi
 
 export type Api = typeof api

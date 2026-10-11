@@ -5,6 +5,7 @@ const executablePath = process.env.PW_CHROMIUM_PATH || undefined
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: /static\.spec\.ts/,
   timeout: 90_000,
   expect: { timeout: 20_000 },
   fullyParallel: false,

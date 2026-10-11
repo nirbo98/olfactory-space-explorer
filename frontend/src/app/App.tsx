@@ -29,6 +29,7 @@ import { DoseResponsePanel } from '../components/charts/DoseResponsePanel'
 import { ModelMetricsPanel } from '../components/charts/ModelMetricsPanel'
 import { sampleEmbedding } from '../store/datasetStore'
 import { sceneShared } from '../components/visualization/sharedScene'
+import { STATIC_MODE } from '../services/mode'
 
 const MODES: { id: AppMode; label: string }[] = [
   { id: 'dataset', label: 'נתונים' }, { id: 'model', label: 'מודל' }, { id: 'explore', label: 'חקירה' },
@@ -58,6 +59,7 @@ function Header() {
       </nav>
       <div className="flex items-center gap-3">
         <span className="num text-[11px] text-slate-500" dir="ltr">{cfg?.model_version} · {cfg?.model_status}</span>
+        {STATIC_MODE && <span className="chip text-sky-200" title="המודל המאומן רץ בדפדפן (ONNX). טיילור ותכנון הפוך — תוצאות מחושבות מראש." data-testid="static-badge">גרסת דפדפן · ONNX</span>}
         <DatasetProvenanceBadge />
       </div>
     </header>
@@ -139,14 +141,16 @@ export default function App() {
         <div className="max-w-lg space-y-3 rounded border border-red-500/40 bg-red-950/20 p-6">
           <h2 className="text-lg font-semibold text-red-200">אין חיבור לשרת המודל</h2>
           <p className="text-sm text-slate-300">{error}</p>
-          <p className="text-sm text-slate-400">הפעילו את ה-backend: <code dir="ltr">make backend</code> (או <code dir="ltr">make bootstrap</code> בפעם הראשונה) ורעננו.</p>
+          {STATIC_MODE
+            ? <p className="text-sm text-slate-400">טעינת קבצי המודל הסטטיים נכשלה. רעננו את הדף.</p>
+            : <p className="text-sm text-slate-400">הפעילו את ה-backend: <code dir="ltr">make backend</code> (או <code dir="ltr">make bootstrap</code> בפעם הראשונה) ורעננו.</p>}
           <button className="btn" onClick={load}>ניסיון חוזר</button>
         </div>
       </div>
     )
   }
   if (status !== 'ready') {
-    return <div className="flex h-screen items-center justify-center text-slate-400" role="status">טוען אטלס ייחוס ומודל…</div>
+    return <div className="flex h-screen items-center justify-center text-slate-400" role="status">{STATIC_MODE ? 'טוען אטלס ייחוס ואת המודל לדפדפן…' : 'טוען אטלס ייחוס ומודל…'}</div>
   }
   return (
     <div className="app-shell">

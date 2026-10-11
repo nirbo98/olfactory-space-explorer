@@ -7,9 +7,12 @@ import { Heatmap } from './Heatmap'
 import { Slider } from '../controls/Slider'
 import { seq } from '../../utils/colors'
 import { axisProps, gridProps, num, numExp, tooltipProps } from './chartTheme'
+import { STATIC_MODE } from '../../services/mode'
 
 export function TaylorApproximationPanel() {
   const components = useMixtureStore((s) => s.components)
+  const setMixture = useMixtureStore((s) => s.setMixture)
+  const clearKnockdowns = useMixtureStore((s) => s.clearKnockdowns)
   const knockdowns = useMixtureStore((s) => s.knockdowns)
   const receptor = useMixtureStore((s) => s.selectedReceptor)
   const ids = components.map((c) => c.compound_id)
@@ -52,7 +55,15 @@ export function TaylorApproximationPanel() {
         </div>
         <Slider label="טווח הסריקה (יחסי ל-‖c₀‖)" value={span} min={0.1} max={3} step={0.05} onChange={setSpan} format={(v) => v.toFixed(2)} />
         {busy && <div className="text-sky-300">מחשב נגזרות (autograd)…</div>}
-        {err && <div className="warn">{err}</div>}
+        {err === 'STATIC_TAYLOR_UNAVAILABLE' ? (
+          <div className="warn space-y-1" data-testid="taylor-static-note">
+            <div>בגרסת Pages הנגזרות (autograd) חושבו מראש עבור התערובת C001 0.5 + C005 0.2, שני הרכיבים, טווח 1.0, ללא עיכוב רצפטורים — לכל 64 הרצפטורים.</div>
+            <button className="btn" onClick={() => { setMixture([{ compound_id: 'C001', concentration: 0.5 }, { compound_id: 'C005', concentration: 0.2 }]); clearKnockdowns(); setSel(['C001', 'C005']); setSpan(1) }}>
+              טעינת התצורה המחושבת
+            </button>
+          </div>
+        ) : err && <div className="warn">{err}</div>}
+        {STATIC_MODE && !err && <div className="text-[10.5px] text-slate-500">גרסת Pages: תוצאה מחושבת מראש בשרת הפייתון.</div>}
         <p className="text-[11px] leading-snug text-slate-500">
           f(c₀+Δc) ≈ f(c₀) + J·Δc + ½ Δcᵀ H Δc. הקירוב מקומי בלבד — השגיאה גדלה ככל שמתרחקים מ-c₀. הסריקה מוגבלת ל-c ≥ 0.
         </p>

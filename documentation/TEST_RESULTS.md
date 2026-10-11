@@ -4,10 +4,11 @@ Executed on 2026-10-11 in a Linux container (2 CPU cores, no GPU): Python 3.13, 
 
 | Suite | Command | Result |
 |---|---|---|
-| Backend (pytest) | `make test-backend` | **47 passed** (8.5 s) |
+| Backend (pytest) | `make test-backend` | **52 passed** (9.5 s) — incl. ONNX-vs-PyTorch parity for the Pages build |
 | Frontend type check | `npx tsc --noEmit -p .` | no errors |
-| Frontend unit (vitest) | `npx vitest run` | **25 passed** |
-| End-to-end (Playwright, real backend + frontend) | `make test-e2e` | **8 passed** (1.8 min) |
+| Frontend unit (vitest) | `npx vitest run` | **28 passed** — incl. TypeScript DFT vs numpy fixture |
+| End-to-end (Playwright, real backend + frontend) | `npx playwright test` | **8 passed** (1.7 min) |
+| End-to-end, static Pages build (no server, ONNX in browser) | `npx playwright test -c playwright.static.config.ts` | **2 passed** (29 s); asserts zero `/api` requests |
 | Production build | `npm run build` | built |
 
 Note: in this container Playwright's own browser download was blocked by the network policy, so the e2e run used a pre-installed Chromium via `PW_CHROMIUM_PATH`. On a normal machine run `npx playwright install chromium` once.
