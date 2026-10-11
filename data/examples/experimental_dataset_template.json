@@ -1,0 +1,28 @@
+{
+  "name": "format-example",
+  "provenance": "format_example_only",
+  "license": "CC0 — schema illustration only; contains NO measurements",
+  "citation": null,
+  "receptor_ids": ["OR_EXAMPLE_A", "OR_EXAMPLE_B"],
+  "descriptor_labels": ["descriptor_example"],
+  "compounds": [
+    {"compound_id": "EX1", "name": "placeholder compound 1", "features": [0, 1, 0, 1]},
+    {"compound_id": "EX2", "name": "placeholder compound 2", "features": [1, 0, 1, 0]}
+  ],
+  "mixtures": [
+    {
+      "sample_id": "EXAMPLE-1",
+      "components": [
+        {"compound_id": "EX1", "concentration": 0.0, "unit": "placeholder"},
+        {"compound_id": "EX2", "concentration": 0.0, "unit": "placeholder"}
+      ],
+      "environment": {"temperature_c": null, "relative_humidity": null},
+      "receptor_responses": {"OR_EXAMPLE_A": 0.0, "OR_EXAMPLE_B": null},
+      "assay_conditions": "placeholder — describe the assay here",
+      "descriptors": {"descriptor_example": null},
+      "intensity": null,
+      "intensity_sd": null,
+      "participant_id": null
+    }
+  ]
+}

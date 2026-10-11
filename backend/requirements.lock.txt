@@ -1,0 +1,13 @@
+# Versions the prototype was built and tested with (Python 3.13, CPU).
+# Install torch first from the CPU index to avoid multi-GB CUDA wheels on Linux:
+#   pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
+fastapi==0.143.0
+uvicorn[standard]==0.53.0
+pydantic==2.13.5
+numpy==2.5.3
+scipy==1.18.1
+torch==2.14.1
+scikit-learn==1.9.1
+pandas==3.0.5
+pytest==9.1.1
+httpx==0.28.1

@@ -1,0 +1,110 @@
+{
+ "default (GRU, sparse 20%, lateral inhibition)": {
+  "train": {
+   "loss": 0.8929442167282104,
+   "receptor_mae": 0.03206314146518707,
+   "descriptor_auroc_macro": 0.9823435261003877,
+   "similarity_spearman": 0.980946286356662
+  },
+  "val": {
+   "loss": 0.9883596897125244,
+   "receptor_mae": 0.03585163876414299,
+   "descriptor_auroc_macro": 0.9248888462025425,
+   "similarity_spearman": 0.93832077402145
+  },
+  "test_unseen_mixtures": {
+   "loss": 0.9744513630867004,
+   "receptor_mae": 0.03605137765407562,
+   "descriptor_auroc_macro": 0.9226477009242263,
+   "similarity_spearman": 0.9311266094227474
+  },
+  "test_heldout_compounds": {
+   "loss": 1.05563223361969,
+   "receptor_mae": 0.05033745616674423,
+   "descriptor_auroc_macro": 0.8691307628001962,
+   "similarity_spearman": 0.9002438609788995
+  },
+  "best_epoch": 390
+ },
+ "no sparsity": {
+  "train": {
+   "loss": 0.9307966828346252,
+   "receptor_mae": 0.040585894137620926,
+   "descriptor_auroc_macro": 0.9791483904574037,
+   "similarity_spearman": 0.9600366520032231
+  },
+  "val": {
+   "loss": 1.0032310485839844,
+   "receptor_mae": 0.044008512049913406,
+   "descriptor_auroc_macro": 0.9217965996552595,
+   "similarity_spearman": 0.9303077635411535
+  },
+  "test_unseen_mixtures": {
+   "loss": 1.0055557489395142,
+   "receptor_mae": 0.044680651277303696,
+   "descriptor_auroc_macro": 0.9254243231892039,
+   "similarity_spearman": 0.9132777911138237
+  },
+  "test_heldout_compounds": {
+   "loss": 1.0992157459259033,
+   "receptor_mae": 0.05974648520350456,
+   "descriptor_auroc_macro": 0.8850275863976481,
+   "similarity_spearman": 0.8690703522903325
+  },
+  "best_epoch": 395
+ },
+ "no lateral inhibition": {
+  "train": {
+   "loss": 0.8867695331573486,
+   "receptor_mae": 0.030186206102371216,
+   "descriptor_auroc_macro": 0.9868636426018398,
+   "similarity_spearman": 0.9826572085151335
+  },
+  "val": {
+   "loss": 0.963537871837616,
+   "receptor_mae": 0.03450657054781914,
+   "descriptor_auroc_macro": 0.9313086668598753,
+   "similarity_spearman": 0.9450506009764119
+  },
+  "test_unseen_mixtures": {
+   "loss": 0.9783440232276917,
+   "receptor_mae": 0.03432736173272133,
+   "descriptor_auroc_macro": 0.9264049348168915,
+   "similarity_spearman": 0.9264470350022723
+  },
+  "test_heldout_compounds": {
+   "loss": 1.047687292098999,
+   "receptor_mae": 0.048657603561878204,
+   "descriptor_auroc_macro": 0.8861318412189936,
+   "similarity_spearman": 0.8960904009314989
+  },
+  "best_epoch": 390
+ },
+ "attention cortex": {
+  "train": {
+   "loss": 0.8848827481269836,
+   "receptor_mae": 0.03285901993513107,
+   "descriptor_auroc_macro": 0.9897875385556641,
+   "similarity_spearman": 0.9855347512383559
+  },
+  "val": {
+   "loss": 0.9797953367233276,
+   "receptor_mae": 0.03648213669657707,
+   "descriptor_auroc_macro": 0.9225856836892419,
+   "similarity_spearman": 0.9376098625878257
+  },
+  "test_unseen_mixtures": {
+   "loss": 0.982822597026825,
+   "receptor_mae": 0.03721309453248978,
+   "descriptor_auroc_macro": 0.9210392641659059,
+   "similarity_spearman": 0.9169420937376787
+  },
+  "test_heldout_compounds": {
+   "loss": 1.0433117151260376,
+   "receptor_mae": 0.04866375774145126,
+   "descriptor_auroc_macro": 0.8831240564750755,
+   "similarity_spearman": 0.9083111358980286
+  },
+  "best_epoch": 347
+ }
+}
