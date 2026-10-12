@@ -77,4 +77,6 @@ frontend/e2e/              Playwright scenarios + screenshots
 data/synthetic, data/examples, checkpoints/, documentation/
 ```
 
+Scientific background (Hebrew): [`OLFACTION_LITERATURE_REVIEW_HE.md`](documentation/OLFACTION_LITERATURE_REVIEW_HE.md) · Code-to-math explanation (Hebrew): [`COMPUTATION_EXPLAINED_HE.md`](documentation/COMPUTATION_EXPLAINED_HE.md). The application also includes a **מדע וחישובים** research tab.
+
 Details: [`ARCHITECTURE.md`](documentation/ARCHITECTURE.md) · [`DATA_SCHEMA.md`](documentation/DATA_SCHEMA.md) · [`SCIENTIFIC_LIMITATIONS.md`](documentation/SCIENTIFIC_LIMITATIONS.md) · [`TEST_RESULTS.md`](documentation/TEST_RESULTS.md)

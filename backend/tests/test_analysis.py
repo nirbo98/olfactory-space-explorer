@@ -65,6 +65,28 @@ def test_inverse_optimization_respects_bounds(model, dataset):
     assert all(p.requires_grad for p in model.parameters())          # model left intact
 
 
+def test_inverse_does_not_mutate_shared_model(model, dataset):
+    """An inverse request must never change parameters, flags, or model mode.
+
+    The server shares a model instance between inference requests, so toggling
+    requires_grad_ (even if restored later) is unsafe.
+    """
+    feats = torch.as_tensor(dataset["compound_features"])
+    f, c, m = make_batch(dataset, [250])
+    with torch.no_grad():
+        target = model(f, c, m).odor_embedding[0].numpy()
+    before_flags = [p.requires_grad for p in model.parameters()]
+    before_weights = [p.detach().clone() for p in model.parameters()]
+    before_grads = [p.grad for p in model.parameters()]
+    before_training_mode = model.training
+    inverse_design(model, feats, list(range(8)), target, max_components=3,
+                   n_starts=2, steps=5, refine_steps=2, c_max=2.0)
+    assert [p.requires_grad for p in model.parameters()] == before_flags
+    assert model.training == before_training_mode
+    assert all(torch.equal(p, before) for p, before in zip(model.parameters(), before_weights))
+    assert all(p.grad is before for p, before in zip(model.parameters(), before_grads))
+
+
 def test_write_fourier_fixture():
     """Fixture for the in-browser (static build) DFT twin in frontend/src/mathematics/fourier.ts."""
     import json

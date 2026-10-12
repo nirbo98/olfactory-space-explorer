@@ -16,6 +16,7 @@ import { ExploreOptions } from '../components/panels/ExploreOptions'
 import { InverseDesignPanel } from '../components/panels/InverseDesignPanel'
 import { DatasetPanel } from '../components/panels/DatasetPanel'
 import { ModelPanel } from '../components/panels/ModelPanel'
+import { SciencePanel } from '../components/panels/SciencePanel'
 import { SelectedStatePanel } from '../components/panels/SelectedStatePanel'
 import { ReceptorActivityPanel } from '../components/panels/ReceptorActivityPanel'
 import { BulbActivityPanel } from '../components/panels/BulbActivityPanel'
@@ -32,7 +33,7 @@ import { sceneShared } from '../components/visualization/sharedScene'
 import { STATIC_MODE } from '../services/mode'
 
 const MODES: { id: AppMode; label: string }[] = [
-  { id: 'dataset', label: 'נתונים' }, { id: 'model', label: 'מודל' }, { id: 'explore', label: 'חקירה' },
+  { id: 'dataset', label: 'נתונים' }, { id: 'model', label: 'מודל' }, { id: 'science', label: 'מדע וחישובים' }, { id: 'explore', label: 'חקירה' },
   { id: 'simulate', label: 'סימולציה' }, { id: 'inverse', label: 'תכנון הפוך' },
 ]
 const TABS: { id: BottomTab; label: string }[] = [
@@ -72,6 +73,7 @@ function LeftColumn() {
     <aside className="side-col" aria-label="בקרות" data-testid="controls-column">
       {mode === 'dataset' && <DatasetPanel />}
       {mode === 'model' && <ModelPanel />}
+      {mode === 'science' && <SciencePanel />}
       {(mode === 'explore' || mode === 'simulate') && <><ProjectionModeSelector /><DimensionSelector /></>}
       {mode === 'explore' && <><ExploreOptions /><MoleculeMixtureEditor /></>}
       {mode === 'simulate' && <><MoleculeMixtureEditor /><ReceptorKnockoutControls /></>}
