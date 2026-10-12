@@ -5,3 +5,4 @@ frontend/playwright-report/
 __pycache__/
 *.egg-info/
 .pytest_cache/
+*.tsbuildinfo

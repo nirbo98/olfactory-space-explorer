@@ -12,6 +12,7 @@ import { liftDisplacement } from '../../mathematics/projection'
 import { useEffect, useState } from 'react'
 import { STATIC_MODE } from '../../services/mode'
 import { selectSample } from '../../services/actions'
+import { INVERSE_API_MAX_COMPONENTS, INVERSE_UI_DEFAULT_COMPONENTS, PAGES_INVERSE_PARAMS } from '../../config/inverseLimits'
 
 const RUN_COLORS = ['#7ee0ff', '#5b8def', '#3ec7c2', '#d7a54a', '#c26fd6', '#7fbf6a', '#e07a6a', '#9aa7b8']
 
@@ -68,11 +69,19 @@ export function InverseDesignPanel() {
         {lifted && <button className="btn" onClick={inv.clearModification}>ביטול ההזזה</button>}
       </Section>
       <Section title="מרחב החיפוש">
-        <Slider label="מספר רכיבים מרבי" value={inv.maxComponents} min={1} max={5} onChange={(v) => inv.setParams({ maxComponents: v })} testId="inv-max" />
-        <Slider label="אתחולים מרובים" value={inv.nStarts} min={1} max={16} onChange={(v) => inv.setParams({ nStarts: v })} />
-        <Slider label="צעדי אופטימיזציה" value={inv.steps} min={50} max={600} step={10} onChange={(v) => inv.setParams({ steps: v })} />
-        <Slider label="משקל דלילות λ" value={Math.log10(inv.sparsityWeight)} min={-5} max={0} step={0.1}
-          onChange={(v) => inv.setParams({ sparsityWeight: 10 ** v })} format={(v) => `1e${v.toFixed(1)}`} />
+        {/* Pages: results were precomputed with fixed settings, so the controls show (and are locked to) those values. */}
+        <Slider label="מספר רכיבים מרבי" value={STATIC_MODE ? PAGES_INVERSE_PARAMS.maxComponents : inv.maxComponents}
+          min={1} max={INVERSE_API_MAX_COMPONENTS} onChange={(v) => inv.setParams({ maxComponents: v })} testId="inv-max"
+          disabled={STATIC_MODE}
+          hint={STATIC_MODE
+            ? `גרסת Pages: קבוע ${PAGES_INVERSE_PARAMS.maxComponents} רכיבים (תוצאות מחושבות מראש). ה-API המקומי מאפשר עד ${INVERSE_API_MAX_COMPONENTS}.`
+            : `ברירת מחדל ${INVERSE_UI_DEFAULT_COMPONENTS}; ה-API מאפשר עד ${INVERSE_API_MAX_COMPONENTS} רכיבים.`} />
+        <Slider label="אתחולים מרובים" value={STATIC_MODE ? PAGES_INVERSE_PARAMS.nStarts : inv.nStarts} min={1} max={16}
+          onChange={(v) => inv.setParams({ nStarts: v })} disabled={STATIC_MODE} />
+        <Slider label="צעדי אופטימיזציה" value={STATIC_MODE ? PAGES_INVERSE_PARAMS.steps : inv.steps} min={50} max={600} step={10}
+          onChange={(v) => inv.setParams({ steps: v })} disabled={STATIC_MODE} />
+        <Slider label="משקל דלילות λ" value={Math.log10(STATIC_MODE ? PAGES_INVERSE_PARAMS.sparsityWeight : inv.sparsityWeight)} min={-5} max={0} step={0.1}
+          onChange={(v) => inv.setParams({ sparsityWeight: 10 ** v })} format={(v) => `1e${v.toFixed(1)}`} disabled={STATIC_MODE} />
         <div>
           <div className="mb-1 flex justify-between text-[11.5px] text-slate-400"><span>תרכובות מותרות ({allowed.length})</span>
             <button className="btn-ghost" onClick={() => inv.setParams({ allowed: null })}>הכול</button></div>

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Section } from '../controls/Slider'
+import { INVERSE_API_MAX_COMPONENTS, INVERSE_UI_DEFAULT_COMPONENTS, PAGES_INVERSE_PARAMS } from '../../config/inverseLimits'
 
 /** References and implementation notes are intentionally static, not predictions. */
 const references = [
@@ -66,8 +67,11 @@ export function SciencePanel() {
         <Note title="7 · טיילור ופורייה" formula="f(c₀+δ) ≈ f(c₀) + ∇fᵀδ + ½δᵀHδ">
           טיילור מקרב מקומית תגובת קולטן בעזרת גרדיאנט והסיאן של המודל. FFT מנתח תנודות *בזמן* של פעילות הקולטנים, לא את הרכב המולקולות.
         </Note>
-        <Note title="8 · תכנון הפוך" formula="argmin_c ||F(c) − z_target||² + λΩ(c)">
-          אופטימיזציה בריכוזים מוגבלים (עד חמישה רכיבים). הפתרון עשוי לא להיות יחיד, והוא אינו מתכון ריח מאומת בלי ניסויי הרחה.
+        <Note title="8 · תכנון הפוך" formula="argmin_c ||F(c) − z_target||² + λΩ(c),  ||c||₀ ≤ k">
+          אופטימיזציה בריכוזים מוגבלים, עם לכל היותר k רכיבים בתערובת: ה-API של השרת מאפשר עד {INVERSE_API_MAX_COMPONENTS};
+          הממשק המקומי משתמש כברירת מחדל ב-{INVERSE_UI_DEFAULT_COMPONENTS} (ניתן להגדיל עד {INVERSE_API_MAX_COMPONENTS});
+          גרסת GitHub Pages מציגה תוצאות שחושבו מראש עם {PAGES_INVERSE_PARAMS.maxComponents} בדיוק.
+          הפתרון עשוי לא להיות יחיד, והוא אינו מתכון ריח מאומת בלי ניסויי הרחה.
         </Note>
       </Section>
       <Section title="מחקרים מרכזיים לקריאה">

@@ -1,4 +1,6 @@
 """Mathematical tests 12–14: Taylor derivatives, FFT, inverse-optimization bounds."""
+import threading
+
 import numpy as np
 import torch
 
@@ -65,26 +67,109 @@ def test_inverse_optimization_respects_bounds(model, dataset):
     assert all(p.requires_grad for p in model.parameters())          # model left intact
 
 
-def test_inverse_does_not_mutate_shared_model(model, dataset):
-    """An inverse request must never change parameters, flags, or model mode.
+# --- inverse design must never mutate the shared model, not even transiently -------------
+# The API server shares ONE model instance between requests (FastAPI runs sync endpoints in
+# a thread pool). Toggling requires_grad_ / eval() during optimization and restoring them
+# afterwards leaves the final state intact but exposes a broken model to concurrent
+# requests, so these tests inspect the model *while* the optimizer is running.
 
-    The server shares a model instance between inference requests, so toggling
-    requires_grad_ (even if restored later) is unsafe.
-    """
-    feats = torch.as_tensor(dataset["compound_features"])
+def _model_state(model) -> dict:
+    params = list(model.parameters())
+    return {
+        "training": [mod.training for mod in model.modules()],
+        "requires_grad": [p.requires_grad for p in params],
+        "grad_is_none": [p.grad is None for p in params],
+        "version": [p._version for p in params],      # bumped by any in-place write to a parameter
+    }
+
+
+def _inverse_target(model, dataset):
     f, c, m = make_batch(dataset, [250])
     with torch.no_grad():
-        target = model(f, c, m).odor_embedding[0].numpy()
-    before_flags = [p.requires_grad for p in model.parameters()]
-    before_weights = [p.detach().clone() for p in model.parameters()]
-    before_grads = [p.grad for p in model.parameters()]
-    before_training_mode = model.training
-    inverse_design(model, feats, list(range(8)), target, max_components=3,
-                   n_starts=2, steps=5, refine_steps=2, c_max=2.0)
-    assert [p.requires_grad for p in model.parameters()] == before_flags
-    assert model.training == before_training_mode
-    assert all(torch.equal(p, before) for p, before in zip(model.parameters(), before_weights))
-    assert all(p.grad is before for p, before in zip(model.parameters(), before_grads))
+        return model(f, c, m).odor_embedding[0].numpy()
+
+
+def test_inverse_never_mutates_shared_model_during_optimization(model, dataset):
+    """Deterministic instrumentation: snapshot the model state at EVERY forward pass the
+    optimizer makes. Every snapshot (not just the final state) must equal the baseline."""
+    feats = torch.as_tensor(dataset["compound_features"])
+    target = _inverse_target(model, dataset)
+    model.train()                       # a non-default mode, so a forced .eval() is also detected
+    baseline = _model_state(model)
+    weights = [p.detach().clone() for p in model.parameters()]
+    seen: list[dict] = []
+    handle = model.register_forward_pre_hook(lambda mod, args: seen.append(_model_state(mod)))
+    try:
+        inverse_design(model, feats, list(range(8)), target, max_components=3,
+                       n_starts=2, steps=5, refine_steps=3, c_max=2.0)
+    finally:
+        handle.remove()
+    assert len(seen) == 5 + 3 + 1       # every optimization step + the final evaluation was observed
+    for i, state in enumerate(seen):
+        for key in baseline:
+            assert state[key] == baseline[key], f"model.{key} changed during optimization (forward #{i})"
+    assert _model_state(model) == baseline
+    assert all(torch.equal(p, w) for p, w in zip(model.parameters(), weights))
+
+
+def test_concurrent_request_sees_intact_model_while_inverse_runs(model, dataset):
+    """Concurrency: pause the optimizer inside its first forward pass (event-synchronized,
+    no sleeps), then act as a second request on the same shared model and verify it gets
+    gradient-enabled parameters and the original mode."""
+    feats = torch.as_tensor(dataset["compound_features"])
+    target = _inverse_target(model, dataset)
+    f, c, m = make_batch(dataset, [10])
+
+    def gradient_request() -> tuple[bool, list[bool]]:
+        """A second request that needs parameter gradients (e.g. a Taylor/saliency analysis).
+        Returns whether its loss was differentiable and which parameters received a gradient."""
+        for p in model.parameters():
+            p.grad = None
+        loss = model(f, c, m).odor_embedding.pow(2).mean()
+        if loss.requires_grad:
+            loss.backward()
+        got = [p.grad is not None for p in model.parameters()]
+        for p in model.parameters():
+            p.grad = None
+        return loss.requires_grad, got
+
+    solo_ok, solo_grads = gradient_request()      # reference: the same request with nothing else running
+    assert solo_ok and any(solo_grads)
+    baseline = _model_state(model)
+    paused, resume = threading.Event(), threading.Event()
+    worker_ident: list[int] = []
+    errors: list[BaseException] = []
+
+    def hook(mod, args):
+        if worker_ident and threading.get_ident() == worker_ident[0] and not paused.is_set():
+            paused.set()
+            resume.wait(timeout=60)
+
+    def worker():
+        worker_ident.append(threading.get_ident())
+        try:
+            inverse_design(model, feats, list(range(8)), target, max_components=3,
+                           n_starts=2, steps=4, refine_steps=2, c_max=2.0)
+        except BaseException as exc:    # surfaced in the main thread below
+            errors.append(exc)
+
+    handle = model.register_forward_pre_hook(hook)
+    thread = threading.Thread(target=worker, daemon=True)
+    try:
+        thread.start()
+        assert paused.wait(timeout=60), "optimizer never reached its first forward pass"
+        # --- optimizer is now suspended mid-request; this is a concurrent request ---
+        during = _model_state(model)
+        concurrent_ok, concurrent_grads = gradient_request()
+    finally:
+        resume.set()
+        thread.join(timeout=120)
+        handle.remove()
+    assert not thread.is_alive() and not errors, errors
+    assert during["requires_grad"] == baseline["requires_grad"], "inverse request disabled gradients on the shared model"
+    assert during["training"] == baseline["training"], "inverse request changed the shared model's mode"
+    assert concurrent_ok, "concurrent request's loss was not differentiable"
+    assert concurrent_grads == solo_grads, "concurrent request received gradients for fewer parameters than when run alone"
 
 
 def test_write_fourier_fixture():

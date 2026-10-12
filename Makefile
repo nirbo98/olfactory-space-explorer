@@ -21,7 +21,7 @@ bootstrap: install data train
 install: install-backend install-frontend
 
 install-backend:
-	$(PIP) install "torch>=2.2" --index-url $(TORCH_INDEX) || $(PIP) install "torch>=2.2"
+	$(PIP) install "torch>=2.5" --index-url $(TORCH_INDEX) || $(PIP) install "torch>=2.5"
 	$(PIP) install -e "$(BACKEND)[dev]"
 
 install-frontend:

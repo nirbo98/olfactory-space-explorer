@@ -152,3 +152,54 @@ test('Inverse target dragging lifts a 3-D displacement into the latent target', 
   expect(Math.abs(dp[1])).toBeLessThan(0.005); expect(Math.abs(dp[2])).toBeLessThan(0.005)
   await page.screenshot({ path: `${SHOTS}/10-inverse-drag.png` })
 })
+
+test('Science & Computations tab: navigation, content, and the simulation still works afterwards', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  const calls = await open(page)
+
+  // navigate to the Hebrew tab
+  const tab = page.getByTestId('tab-science')
+  await expect(tab).toHaveText('מדע וחישובים')
+  await tab.click()
+  await expect(tab).toHaveAttribute('aria-selected', 'true')
+  const panel = page.getByTestId('science-panel')
+  await expect(panel).toBeVisible()
+  await expect(panel).toContainText('נתוני הדמו סינתטיים')
+  await expect(page.getByTestId('odor-space').locator('canvas')).toBeVisible()   // scene stays mounted
+
+  // all eight computation notes expand and show their content
+  const notes = panel.locator('details')
+  await expect(notes).toHaveCount(8)
+  for (let i = 0; i < 8; i++) {
+    await notes.nth(i).locator('summary').click()
+    await expect(notes.nth(i)).toHaveAttribute('open', '')
+  }
+  await expect(panel).toContainText('r_j = g_j')                                 // binding formula
+  await expect(panel).toContainText('exp(−Δt/τ)')                               // exact integration
+  await expect(panel).toContainText('ה-API של השרת מאפשר עד 5')                  // component limits
+  await expect(panel).toContainText('עם 3 בדיוק')
+
+  // literature links: DOI targets, opened safely in a new tab
+  const links = panel.locator('a[href^="https://doi.org/10."]')
+  await expect(links).toHaveCount(8)
+  for (const l of await links.all()) {
+    await expect(l).toHaveAttribute('target', '_blank')
+    await expect(l).toHaveAttribute('rel', /noopener/)
+  }
+  await page.screenshot({ path: `${SHOTS}/11-science-tab.png` })
+
+  // the existing simulation still works after visiting the tab
+  await page.getByTestId('tab-simulate').click()
+  await expect(panel).toBeHidden()
+  const before = await Promise.all(['coord-x', 'coord-y', 'coord-z'].map((id) => num(page, id)))
+  const n = calls.length
+  const resp = page.waitForResponse((r) => r.url().endsWith('/api/v1/simulate') && r.status() === 200)
+  await page.getByTestId('conc-C001').fill('1.4')
+  await resp
+  expect(calls.length).toBeGreaterThan(n)
+  expect(JSON.parse(calls.at(-1)!).mixture[0]).toEqual({ compound_id: 'C001', concentration: 1.4 })
+  await expect.poll(async () => (await Promise.all(['coord-x', 'coord-y', 'coord-z'].map((id) => num(page, id)))).join())
+    .not.toBe(before.join())
+  expect(errors).toEqual([])
+})

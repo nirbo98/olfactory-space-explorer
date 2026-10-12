@@ -88,3 +88,13 @@ def test_fourier_taylor_dose_inverse(client):
     for c in inv["candidates"]:
         assert len(c["components"]) <= 3
         assert all(0 <= x["concentration"] <= 2.0 for x in c["components"])
+
+
+def test_inverse_component_limit_is_enforced(client):
+    """API accepts 1–5 components (the UI defaults to 3, the Pages build uses 3)."""
+    base = {"target_sample_id": "M0100", "n_starts": 1, "steps": 10, "refine_steps": 0}
+    assert client.post("/api/v1/inverse-design", json={**base, "max_components": 6}).status_code == 422
+    assert client.post("/api/v1/inverse-design", json={**base, "max_components": 0}).status_code == 422
+    ok = client.post("/api/v1/inverse-design", json={**base, "max_components": 5})
+    assert ok.status_code == 200
+    assert all(len(c["components"]) <= 5 for c in ok.json()["candidates"])
