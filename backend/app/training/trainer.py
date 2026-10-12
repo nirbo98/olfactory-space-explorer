@@ -239,7 +239,21 @@ def train(ds: dict, mc: ModelConfig | None = None, tc: TrainConfig | None = None
 
 
 def load_checkpoint(path: Path = CHECKPOINT_DIR / f"{MODEL_VERSION}.pt"):
-    ckpt = torch.load(path, map_location="cpu", weights_only=False)
+    # The bundled demo-v1 checkpoint includes NumPy scalar metadata. Allowlist only
+    # the legacy scalar/dtype objects it requires, instead of unrestricted pickle.
+    # For new checkpoints, the metadata should be normalized to Python primitives.
+    try:
+        from numpy._core.multiarray import scalar as numpy_scalar
+    except ImportError:  # NumPy 1.x
+        from numpy.core.multiarray import scalar as numpy_scalar
+    safe_numpy = [numpy_scalar, np.dtype, type(np.dtype("float64")),
+                  type(np.dtype("float32")), type(np.dtype("int64")),
+                  type(np.dtype("str"))]
+    if not hasattr(torch.serialization, "safe_globals"):   # added in torch 2.5
+        raise RuntimeError(f"torch {torch.__version__} is too old for restricted checkpoint loading; "
+                           "install torch>=2.5 (see backend/pyproject.toml)")
+    with torch.serialization.safe_globals(safe_numpy):
+        ckpt = torch.load(path, map_location="cpu", weights_only=True)
     model = BioOlfactoryModel(ModelConfig.from_dict(ckpt["model_config"]))
     model.load_state_dict(ckpt["state_dict"])
     model.eval()

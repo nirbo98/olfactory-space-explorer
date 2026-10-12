@@ -56,7 +56,7 @@ Splits: by component set (all concentration variants of a set share a split); mi
 | POST | `/analyze/fourier` | rFFT amplitude/power, dominant peaks, band-limited reconstruction |
 | POST | `/analyze/taylor` | gradient (all components), Hessian (1–3 selected), FD check, sweeps, 2-D error map |
 | POST | `/analyze/dose-response` | receptor concentration–response curves (model + teacher) |
-| POST | `/inverse-design` | bounded multi-start optimization with cardinality ≤ 5, warnings |
+| POST | `/inverse-design` | bounded multi-start optimization with at most `max_components` components (1–5, API default 5; the interactive UI defaults to 3; the Pages build shows results precomputed with exactly 3), warnings |
 
 ### `/simulate` shapes (E = 256, R = 64, D = 64, H = 256, T = frame_count)
 

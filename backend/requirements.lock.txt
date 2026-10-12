@@ -1,4 +1,5 @@
-# Versions the prototype was built and tested with (Python 3.13, CPU).
+# Versions the prototype was built and tested with (Python 3.13, CPU). Minimum supported torch: 2.5
+# (also tested with torch==2.5.0: full backend suite passes).
 # Install torch first from the CPU index to avoid multi-GB CUDA wheels on Linux:
 #   pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
 fastapi==0.143.0

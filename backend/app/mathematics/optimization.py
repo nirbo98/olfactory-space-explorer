@@ -32,9 +32,9 @@ def inverse_design(model, compound_features: torch.Tensor, allowed: list[int], z
         raise ValueError("at least one allowed compound is required")
     if not 1 <= max_components <= 5:
         raise ValueError("max_components must be within 1..5")
-    model.eval()
-    for p in model.parameters():
-        p.requires_grad_(False)
+    # The model may be shared by concurrent FastAPI requests. Do not mutate its
+    # training mode or parameter.requires_grad flags during inverse optimization.
+    # autograd.grad below differentiates the objective only with respect to theta.
     rng = np.random.default_rng(seed)
     N, S = len(allowed), n_starts
     feats = compound_features[allowed][None].expand(S, -1, -1).contiguous()
@@ -56,8 +56,9 @@ def inverse_design(model, compound_features: torch.Tensor, allowed: list[int], z
             dist2 = (out.odor_embedding - z_t).pow(2).sum(-1)
             omega = torch.sqrt(c + 1e-4).sum(-1) * mask.sum(-1).clamp(min=1).rsqrt()
             loss = (dist2 + sparsity_weight * omega).sum()
-            opt.zero_grad()
-            loss.backward()
+            opt.zero_grad(set_to_none=True)
+            (theta_grad,) = torch.autograd.grad(loss, theta)
+            theta.grad = theta_grad
             opt.step()
             history.append(dist2.detach().sqrt().tolist())
 
@@ -80,9 +81,6 @@ def inverse_design(model, compound_features: torch.Tensor, allowed: list[int], z
         mask_final = (c > 0).float()
         out = model(feats, c, mask_final, g)
         dist = (out.odor_embedding - z_t).pow(2).sum(-1).sqrt()
-
-    for p in model.parameters():
-        p.requires_grad_(True)
 
     candidates = []
     for s in range(S):

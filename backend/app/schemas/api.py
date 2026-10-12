@@ -80,7 +80,7 @@ class InverseDesignRequest(BaseModel):
     target_sample_id: str | None = None
     target_embedding: list[float] | None = None
     allowed_compounds: list[str] | None = None
-    max_components: int = Field(5, ge=1, le=5)
+    max_components: int = Field(5, ge=1, le=5, description="maximum number of components in a candidate mixture (1-5). The interactive UI defaults to 3; the static Pages build shows results precomputed with 3.")
     n_starts: int = Field(8, ge=1, le=32)
     steps: int = Field(200, ge=10, le=2000)
     refine_steps: int = Field(150, ge=0, le=2000)

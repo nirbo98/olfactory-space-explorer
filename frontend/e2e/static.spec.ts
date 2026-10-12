@@ -47,3 +47,29 @@ test('static build: playback, FFT, precomputed Taylor and inverse design', async
   await expect(page.getByTestId('inverse-candidates')).toContainText('#1')
   await page.screenshot({ path: `${SHOTS}/static-02-inverse.png` })
 })
+
+test('static build: Science tab, locked 3-component inverse settings, simulation still works', async ({ page }) => {
+  const { apiCalls, errors } = await open(page)
+  await page.getByTestId('tab-science').click()
+  const panel = page.getByTestId('science-panel')
+  await expect(panel).toBeVisible()
+  await expect(panel.locator('details')).toHaveCount(8)
+  await panel.locator('details').nth(7).locator('summary').click()
+  await expect(panel).toContainText('עם 3 בדיוק')
+  await expect(panel.locator('a[href^="https://doi.org/10."]')).toHaveCount(8)
+
+  // Pages inverse controls are locked to the precomputed settings (3 components)
+  await page.getByTestId('tab-inverse').click()
+  await expect(page.getByTestId('inv-max')).toBeDisabled()
+  await expect(page.getByTestId('inv-max-value')).toHaveText('3')
+
+  // in-browser ONNX simulation still responds afterwards
+  await page.getByTestId('tab-simulate').click()
+  const before = await Promise.all(['coord-x', 'coord-y', 'coord-z'].map((id) => num(page, id)))
+  await page.getByTestId('conc-C001').fill('1.4')
+  await expect.poll(async () => (await Promise.all(['coord-x', 'coord-y', 'coord-z'].map((id) => num(page, id)))).join())
+    .not.toBe(before.join())
+  await page.screenshot({ path: `${SHOTS}/static-03-science.png` })
+  expect(apiCalls).toEqual([])
+  expect(errors).toEqual([])
+})

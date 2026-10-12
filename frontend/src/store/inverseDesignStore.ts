@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { api } from '../services/api'
 import type { InverseResponse } from '../types/api'
+import { INVERSE_UI_DEFAULT_COMPONENTS } from '../config/inverseLimits'
 
 /** inverseDesignState — target specification and model-based optimization results. */
 export interface InverseDesignState {
@@ -31,7 +32,7 @@ export const useInverseDesignStore = create<InverseDesignState>((set, get) => ({
   targetEmbedding: null,
   liftedDelta: [0, 0, 0],
   allowed: null,
-  maxComponents: 3,
+  maxComponents: INVERSE_UI_DEFAULT_COMPONENTS,
   nStarts: 8,
   steps: 200,
   sparsityWeight: 1e-3,
