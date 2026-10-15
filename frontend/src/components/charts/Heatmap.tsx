@@ -1,3 +1,4 @@
+import { TOKENS } from '../../theme/tokens'
 import { useEffect, useRef, useState } from 'react'
 
 interface Props {
@@ -35,11 +36,11 @@ export function Heatmap({ values, cols, color, labels, format = (v) => v.toFixed
       ctx.fillStyle = color(values[i], i)
       ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2)
       if (highlight?.has(i)) {
-        ctx.strokeStyle = '#d7a54a'; ctx.lineWidth = 1.5
+        ctx.strokeStyle = TOKENS['series-2']; ctx.lineWidth = 1.5
         ctx.beginPath(); ctx.moveTo(x + 3, y + 3); ctx.lineTo(x + cell - 3, y + cell - 3); ctx.stroke()
       }
       if (i === selected || i === hover) {
-        ctx.strokeStyle = i === selected ? '#e8f1ff' : '#8fb4d9'; ctx.lineWidth = 1.5
+        ctx.strokeStyle = i === selected ? TOKENS['text-1'] : TOKENS['text-2']; ctx.lineWidth = 1.5
         ctx.strokeRect(x + 1.5, y + 1.5, cell - 3, cell - 3)
       }
     }
@@ -55,7 +56,7 @@ export function Heatmap({ values, cols, color, labels, format = (v) => v.toFixed
         role="img" aria-label={ariaLabel} data-testid={testId}
         onMouseMove={(e) => setHover(idx(e))} onMouseLeave={() => setHover(null)}
         onClick={(e) => { const i = idx(e); if (i !== null) onSelect?.(i) }} />
-      <div className="num h-4 text-[11px] text-slate-400">
+      <div className="num h-4 t-xs text-[var(--text-2)]">
         {hover !== null ? `${labels ? labels(hover) : hover}: ${format(values[hover])}` : ' '}
       </div>
     </div>
@@ -63,7 +64,7 @@ export function Heatmap({ values, cols, color, labels, format = (v) => v.toFixed
 }
 
 /** Small bar strip for vectors (each bar one channel). */
-export function BarStrip({ values, ref2, max = 1, height = 46, color = '#5b8def', testId }: {
+export function BarStrip({ values, ref2, max = 1, height = 46, color = TOKENS['series-1'], testId }: {
   values: ArrayLike<number>; ref2?: ArrayLike<number>; max?: number; height?: number; color?: string; testId?: string
 }) {
   const n = values.length
@@ -76,7 +77,7 @@ export function BarStrip({ values, ref2, max = 1, height = 46, color = '#5b8def'
       })}
       {ref2 && Array.from({ length: n }, (_, i) => {
         const y = height - Math.max(0, Math.min(1, ref2[i] / max)) * (height - 2)
-        return <line key={`r${i}`} x1={i * w} x2={(i + 1) * w} y1={y} y2={y} stroke="#e8f1ff" strokeWidth={0.6} />
+        return <line key={`r${i}`} x1={i * w} x2={(i + 1) * w} y1={y} y2={y} stroke={TOKENS['text-1']} strokeWidth={0.6} />
       })}
     </svg>
   )

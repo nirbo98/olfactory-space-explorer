@@ -14,14 +14,14 @@ export function MoleculeMixtureEditor() {
   const byId = new Map(compounds.map((c) => [c.compound_id, c]))
   const edit = (fn: () => void) => { fn(); select(null) }
   return (
-    <Section title="הרכב התערובת" aside={<span className="text-[11px] text-slate-500">{m.sourceSampleId ? `מקור: ${m.sourceSampleId}` : 'נערך ידנית'}</span>}>
+    <Section title="הרכב התערובת" aside={<span className="t-xs text-[var(--text-3)]">{m.sourceSampleId ? `מקור: ${m.sourceSampleId}` : 'נערך ידנית'}</span>}>
       {m.components.map((c) => {
         const info = byId.get(c.compound_id)
         return (
-          <div key={c.compound_id} className="rounded border border-slate-800 p-2" data-testid={`component-${c.compound_id}`}>
-            <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400">
+          <div key={c.compound_id} className="rounded border border-[var(--line-1)] p-2" data-testid={`component-${c.compound_id}`}>
+            <div className="mb-1 flex items-center justify-between t-xs text-[var(--text-2)]">
               <span>{info?.name ?? c.compound_id} · משפחה {info?.family}{info?.heldout ? ' · הוחזקה מהאימון' : ''}</span>
-              <button className="btn-ghost text-[11px]" disabled={m.components.length <= 1}
+              <button className="btn-ghost t-xs" disabled={m.components.length <= 1}
                 onClick={() => edit(() => m.removeComponent(c.compound_id))} aria-label={`הסרת ${c.compound_id}`}>הסרה</button>
             </div>
             <ConcentrationSlider compoundId={c.compound_id} value={c.concentration}

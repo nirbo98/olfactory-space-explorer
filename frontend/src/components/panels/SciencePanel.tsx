@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Section } from '../controls/Slider'
+import { useVisualizationStore } from '../../store/visualizationStore'
 import { INVERSE_API_MAX_COMPONENTS, INVERSE_UI_DEFAULT_COMPONENTS, PAGES_INVERSE_PARAMS } from '../../config/inverseLimits'
 
 /** References and implementation notes are intentionally static, not predictions. */
@@ -12,15 +13,17 @@ const references = [
   { author: 'Lalis et al. (2024)', topic: 'מאגר תגובות מולקולה–קולטן (M2OR)', doi: '10.1093/nar/gkad886' },
   { author: 'Lee et al. (2023)', topic: 'מפת הריחות POM', doi: '10.1126/science.ade4401' },
   { author: 'Hamel et al. (2024)', topic: 'מאגר נתוני ריח Pyrfume', doi: '10.1038/s41597-024-04051-z' },
+  { author: 'Keller & Vosshall (2016)', topic: 'דירוגי ריח של 55 נבדקים ל-480 מולקולות (משמש לאימות)', doi: '10.1186/s12868-016-0287-2' },
+  { author: 'Keller et al. (2017)', topic: 'DREAM: חיזוי תפיסת ריח ממבנה כימי', doi: '10.1126/science.aal2014' },
 ]
 
 function Note({ title, formula, children }: { title: string; formula?: string; children: ReactNode }) {
   return (
-    <details className="border-b border-slate-800/70 py-2 last:border-b-0">
-      <summary className="cursor-pointer text-[12px] font-medium text-slate-200">{title}</summary>
-      <div className="space-y-2 pt-2 text-[11.5px] leading-relaxed text-slate-400">
+    <details className="border-b border-[var(--line-1)] py-2 last:border-b-0">
+      <summary className="cursor-pointer t-base font-medium text-[var(--text-1)]">{title}</summary>
+      <div className="space-y-2 pt-2 t-base leading-relaxed text-[var(--text-2)]">
         {children}
-        {formula && <div className="rounded bg-slate-950/70 p-2 font-mono text-[11px] text-cyan-200" dir="ltr" style={{ overflowWrap: 'anywhere' }}>{formula}</div>}
+        {formula && <div className="formula">{formula}</div>}
       </div>
     </details>
   )
@@ -28,16 +31,16 @@ function Note({ title, formula, children }: { title: string; formula?: string; c
 
 export function SciencePanel() {
   return (
-    <div data-testid="science-panel">
+    <div data-testid="science-panel" className="card !p-0 overflow-hidden">
       <Section title="מה מדעי ומה סימולציה?">
         <div className="warn">נתוני הדמו סינתטיים: 32 תרכובות וירטואליות, 64 קולטנים מדומים ווקטור ריח בן 256 ממדים. אין כאן מדידות אנושיות.</div>
-        <p className="mt-2 text-[11.5px] leading-relaxed text-slate-300">
+        <p className="mt-2 t-sm leading-relaxed text-[var(--text-1)]">
           בספרות יש בסיס ניסויי לקידוד קומבינטורי, קשירה תחרותית, עיכוב בתערובות וייצוגים קורטיקליים מבוזרים.
           נוסחאות המודל הן <strong>קירובים הנדסיים ניתנים לבדיקה</strong>, לא שחזור מאומת של המוח.
         </p>
       </Section>
       <Section title="מסלול הריח — מן האוויר לקורטקס">
-        <ol className="list-decimal space-y-1 pr-4 text-[11.5px] leading-relaxed text-slate-400">
+        <ol className="list-decimal space-y-1 ps-4 t-sm leading-relaxed text-[var(--text-2)]">
           <li>מולקולות נדיפות מגיעות לרירית האף — הריכוז באוויר שונה לעיתים מהריכוז בבקבוק.</li>
           <li>מולקולות מפעילות או מעכבות צירופים של סוגי קולטנים.</li>
           <li>פקעת ההרחה מבצעת עיבוד, נרמול וקשרי עיכוב/משוב.</li>
@@ -47,7 +50,7 @@ export function SciencePanel() {
       <Section title="מה בדיוק מחושב? פתח כל שלב">
         <Note title="1 · קידוד מולקולות (MLP, לא GNN)">
           כל וקטור תכונות [256] עובר Linear → LayerNorm → GELU → Linear ומתקבל embedding בן 128 ערכים. בדמו התכונות סינתטיות; החיבור ל-SMILES/RDKit הוא הרחבה אופציונלית.
-          <div dir="ltr" className="font-mono text-[10px] text-slate-500">backend/app/models/molecular_encoder.py</div>
+          <div dir="ltr" className="font-mono t-xs text-[var(--text-3)]">backend/app/models/molecular_encoder.py</div>
         </Note>
         <Note title="2 · קולטנים: קשירה תחרותית" formula="r_j = g_j [Σ_i ε_ij (c_i/K_ij)] / [1 + Σ_i(c_i/K_ij)]">
           הרשת מעריכה K חיובי ויעילות הפעלה ε בטווח 0–1. שינוי ריכוז או knockout מעדכן את כל תגובות הקולטנים. נוסחה מפושטת שנשענת על רעיון קשירה תחרותית, לא מדידות של הקולטנים המדומים.
@@ -75,18 +78,19 @@ export function SciencePanel() {
         </Note>
       </Section>
       <Section title="מחקרים מרכזיים לקריאה">
-        <p className="mb-2 text-[11px] text-slate-500">קישורים למאמרי מקור ולמחקרים יישומיים. סקירת הספרות המורחבת והנוסחאות המלאות נמצאות בתיקיית documentation של הפרויקט.</p>
+        <p className="mb-2 t-xs text-[var(--text-3)]">קישורים למאמרי מקור ולמחקרים יישומיים. סקירת הספרות המורחבת והנוסחאות המלאות נמצאות בתיקיית documentation של הפרויקט.</p>
         <ul className="space-y-2">
           {references.map((ref) => (
-            <li key={ref.doi} className="border-r-2 border-slate-700 pr-2 text-[11.5px]">
+            <li key={ref.doi} className="border-s-2 border-[var(--line-2)] ps-2 t-sm">
               <a href={`https://doi.org/${ref.doi}`} target="_blank" rel="noopener noreferrer" className="font-medium text-sky-300 hover:underline">{ref.author} ↗</a>
-              <div className="text-slate-400">{ref.topic}</div>
+              <div className="text-[var(--text-2)]">{ref.topic}</div>
             </li>
           ))}
         </ul>
       </Section>
       <Section title="מה צריך כדי לטעון לדיוק מדעי?">
-        <p className="text-[11.5px] leading-relaxed text-slate-400">מדידות ריכוזי headspace; תגובות קולטנים מזוהים; ניסויי דירוג דמיון בין תערובות; חלוקה נכונה לסטים בלתי תלויים; השוואה למודלים פשוטים; ובדיקה בנבדקים חדשים. עד אז התוצאות הן תחזיות של סימולטור בלבד.</p>
+        <p className="t-base leading-relaxed text-[var(--text-2)]">מדידות ריכוזי headspace; תגובות קולטנים מזוהים; ניסויי דירוג דמיון בין תערובות; חלוקה נכונה לסטים בלתי תלויים; השוואה למודלים פשוטים; ובדיקה בנבדקים חדשים.</p>
+        <p className="t-base leading-relaxed text-[var(--text-2)]">צעד ראשון נעשה: בלשונית <button className="btn-ghost underline" onClick={() => useVisualizationStore.getState().set({ mode: 'validation' })}>אימות מדעי</button> המודל נבחן מול דירוגי ריח של בני אדם אמיתיים (Keller &amp; Vosshall 2016), עם חלוקה לפי שלד כימי, מודלים בסיסיים ותקרת רעש, לפי השערות שנרשמו מראש. עדיין אין נתוני קולטנים או תערובות.</p>
       </Section>
     </div>
   )

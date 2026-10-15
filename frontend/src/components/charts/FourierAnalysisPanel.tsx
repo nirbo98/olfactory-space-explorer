@@ -1,3 +1,4 @@
+import { CHART } from '../../utils/colors'
 import { useEffect, useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { api } from '../../services/api'
@@ -30,18 +31,18 @@ export function FourierAnalysisPanel() {
     return () => { clearTimeout(id); c.abort() }
   }, [signal, tr, useBand, band])
 
-  if (!tr || !signal) return <div className="p-3 text-[12px] text-slate-500">אין אות זמני.</div>
+  if (!tr || !signal) return <div className="p-3 t-sm text-[var(--text-3)]">אין אות זמני.</div>
   const series = tr.times.map((t, k) => ({ t, x: signal[k], rec: res?.reconstruction?.[k] }))
   const spec = res ? res.frequencies.map((f, k) => ({ f: +f.toFixed(3), a: res.amplitude[k] })) : []
   const nyq = res?.nyquist ?? 1 / (2 * tr.dt)
   return (
-    <div className="grid h-full grid-cols-[230px_1fr_1fr] gap-3 p-2" data-testid="fft-panel">
+    <div className="grid h-full grid-cols-1 md:grid-cols-2 xl:grid-cols-[230px_1fr_1fr] gap-3 p-2" data-testid="fft-panel">
       <div className="space-y-2">
         <div role="radiogroup" className="grid grid-cols-2 gap-1">
           <button className={`seg ${layer === 'receptor' ? 'seg-on' : ''}`} onClick={() => setLayer('receptor')}>רצפטור</button>
           <button className={`seg ${layer === 'bulb' ? 'seg-on' : ''}`} onClick={() => setLayer('bulb')}>בולבוס</button>
         </div>
-        <div className="text-[11.5px] text-slate-400">ערוץ: {layer === 'receptor' ? selected : `B${j + 1}`} (לפי הרצפטור הנבחר)</div>
+        <div className="t-sm text-[var(--text-2)]">ערוץ: {layer === 'receptor' ? selected : `B${j + 1}`} (לפי הרצפטור הנבחר)</div>
         <Toggle label="שחזור מוגבל-פס" checked={useBand} onChange={setUseBand} testId="fft-band-toggle" />
         {useBand && (
           <>
@@ -50,38 +51,38 @@ export function FourierAnalysisPanel() {
           </>
         )}
         {res && (
-          <div className="space-y-0.5 text-[11px] text-slate-400" dir="rtl">
-            <div>קצב דגימה <span className="num text-slate-200">{res.sampling_rate.toFixed(2)} Hz</span> · נייקוויסט <span className="num text-slate-200">{res.nyquist.toFixed(2)} Hz</span></div>
-            <div>רזולוציית תדר Δf = <span className="num text-slate-200">{res.frequency_resolution.toFixed(3)} Hz</span></div>
+          <div className="space-y-0.5 t-xs text-[var(--text-2)]" dir="rtl">
+            <div>קצב דגימה <span className="num text-[var(--text-1)]">{res.sampling_rate.toFixed(2)} Hz</span> · נייקוויסט <span className="num text-[var(--text-1)]">{res.nyquist.toFixed(2)} Hz</span></div>
+            <div>רזולוציית תדר Δf = <span className="num text-[var(--text-1)]">{res.frequency_resolution.toFixed(3)} Hz</span></div>
             <div>תדרים דומיננטיים: <span className="num text-sky-200" data-testid="fft-dominant">{res.dominant.map((d) => `${d.frequency.toFixed(2)}Hz`).join(', ')}</span></div>
-            {res.reconstruction_rmse !== undefined && <div>RMSE שחזור: <span className="num text-slate-200">{res.reconstruction_rmse.toFixed(4)}</span></div>}
-            <div className="text-slate-500">התדרים מתארים את המבנה הזמני של האות המדומה (למשל קצב רחרוח), לא את זהות המולקולות. יחידות: מחזורים לשנייה מדומה.</div>
+            {res.reconstruction_rmse !== undefined && <div>RMSE שחזור: <span className="num text-[var(--text-1)]">{res.reconstruction_rmse.toFixed(4)}</span></div>}
+            <div className="text-[var(--text-3)]">התדרים מתארים את המבנה הזמני של האות המדומה (למשל קצב רחרוח), לא את זהות המולקולות. יחידות: מחזורים לשנייה מדומה.</div>
           </div>
         )}
         {err && <div className="warn">{err}</div>}
       </div>
       <div dir="ltr">
-        <div className="mb-1 text-[11px] text-slate-400" dir="rtl">אות מול זמן</div>
+        <div className="mb-1 t-xs text-[var(--text-2)]" dir="rtl">אות מול זמן</div>
         <ResponsiveContainer width="100%" height={190}>
           <LineChart data={series} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid {...gridProps} />
             <XAxis dataKey="t" type="number" domain={[0, tr.times.at(-1)!]} unit="s" {...axisProps} tickFormatter={(v) => Number(v).toFixed(1)} />
             <YAxis {...axisProps} width={44} />
             <Tooltip {...tooltipProps} formatter={num(4)} />
-            <Line dataKey="x" name="signal" stroke="#7ee0ff" dot={false} isAnimationActive={false} />
-            {useBand && <Line dataKey="rec" name="band-limited" stroke="#d7a54a" dot={false} strokeDasharray="5 3" isAnimationActive={false} />}
+            <Line dataKey="x" name="signal" stroke={CHART.primary} dot={false} isAnimationActive={false} />
+            {useBand && <Line dataKey="rec" name="band-limited" stroke={CHART.secondary} dot={false} strokeDasharray="5 3" isAnimationActive={false} />}
           </LineChart>
         </ResponsiveContainer>
       </div>
       <div dir="ltr">
-        <div className="mb-1 text-[11px] text-slate-400" dir="rtl">ספקטרום משרעת (חד-צדדי, ממוצע הוסר)</div>
+        <div className="mb-1 t-xs text-[var(--text-2)]" dir="rtl">ספקטרום משרעת (חד-צדדי, ממוצע הוסר)</div>
         <ResponsiveContainer width="100%" height={190}>
           <BarChart data={spec} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid {...gridProps} />
             <XAxis dataKey="f" {...axisProps} unit="Hz" interval={7} />
             <YAxis {...axisProps} width={44} />
             <Tooltip {...tooltipProps} formatter={num(5)} labelFormatter={(f) => `${f} Hz`} />
-            <Bar dataKey="a" name="amplitude" fill="#5b8def" isAnimationActive={false} />
+            <Bar dataKey="a" name="amplitude" fill={CHART.primary} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
       </div>

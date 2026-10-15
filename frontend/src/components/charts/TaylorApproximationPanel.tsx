@@ -5,7 +5,7 @@ import { useMixtureStore } from '../../store/mixtureStore'
 import type { TaylorResponse } from '../../types/api'
 import { Heatmap } from './Heatmap'
 import { Slider } from '../controls/Slider'
-import { seq } from '../../utils/colors'
+import { CHART, seq } from '../../utils/colors'
 import { axisProps, gridProps, num, numExp, tooltipProps } from './chartTheme'
 import { STATIC_MODE } from '../../services/mode'
 
@@ -42,10 +42,10 @@ export function TaylorApproximationPanel() {
     e1: res.sweep.abs_error_first[k], e2: res.sweep.abs_error_second[k],
   })) : []
   return (
-    <div className="grid h-full grid-cols-[250px_1fr_1fr_220px] gap-3 p-2" data-testid="taylor-panel">
-      <div className="space-y-2 text-[12px]">
-        <div className="text-slate-400">רצפטור: <b className="text-slate-100">{receptor}</b> · f(c) = r_j של שכבת הקשירה המאומנת</div>
-        <div className="text-slate-400">רכיבים להסיאן (1–3):</div>
+    <div className="grid h-full grid-cols-1 md:grid-cols-2 xl:grid-cols-[250px_1fr_1fr_220px] gap-3 p-2" data-testid="taylor-panel">
+      <div className="space-y-2 t-sm">
+        <div className="text-[var(--text-2)]">רצפטור: <b className="text-[var(--text-1)]">{receptor}</b> · f(c) = r_j של שכבת הקשירה המאומנת</div>
+        <div className="text-[var(--text-2)]">רכיבים להסיאן (1–3):</div>
         <div className="flex flex-wrap gap-1">
           {ids.map((id) => (
             <label key={id} className="chip cursor-pointer">
@@ -63,13 +63,13 @@ export function TaylorApproximationPanel() {
             </button>
           </div>
         ) : err && <div className="warn">{err}</div>}
-        {STATIC_MODE && !err && <div className="text-[10.5px] text-slate-500">גרסת Pages: תוצאה מחושבת מראש בשרת הפייתון.</div>}
-        <p className="text-[11px] leading-snug text-slate-500">
+        {STATIC_MODE && !err && <div className="t-xs text-[var(--text-3)]">גרסת Pages: תוצאה מחושבת מראש בשרת הפייתון.</div>}
+        <p className="t-xs leading-snug text-[var(--text-3)]">
           f(c₀+Δc) ≈ f(c₀) + J·Δc + ½ Δcᵀ H Δc. הקירוב מקומי בלבד — השגיאה גדלה ככל שמתרחקים מ-c₀. הסריקה מוגבלת ל-c ≥ 0.
         </p>
       </div>
       <div dir="ltr">
-        <div className="mb-1 text-[11px] text-slate-400" dir="rtl">מודל מול קירובי טיילור לאורך הכיוון d</div>
+        <div className="mb-1 t-xs text-[var(--text-2)]" dir="rtl">מודל מול קירובי טיילור לאורך הכיוון d</div>
         <ResponsiveContainer width="100%" height={190}>
           <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid {...gridProps} />
@@ -77,41 +77,41 @@ export function TaylorApproximationPanel() {
             <YAxis {...axisProps} width={48} domain={['auto', 'auto']} />
             <Tooltip {...tooltipProps} formatter={num(5)} labelFormatter={(s) => `s = ${s}`} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Line dataKey="actual" name="model" stroke="#e8f1ff" dot={false} strokeWidth={2} isAnimationActive={false} />
-            <Line dataKey="first" name="1st order" stroke="#d7a54a" dot={false} strokeDasharray="5 3" isAnimationActive={false} />
-            <Line dataKey="second" name="2nd order" stroke="#3ec7c2" dot={false} strokeDasharray="2 2" isAnimationActive={false} />
+            <Line dataKey="actual" name="model" stroke={CHART.reference} dot={false} strokeWidth={2} isAnimationActive={false} />
+            <Line dataKey="first" name="1st order" stroke={CHART.secondary} dot={false} strokeDasharray="5 3" isAnimationActive={false} />
+            <Line dataKey="second" name="2nd order" stroke={CHART.tertiary} dot={false} strokeDasharray="2 2" isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>
       <div dir="ltr">
-        <div className="mb-1 text-[11px] text-slate-400" dir="rtl">שגיאה מוחלטת (RMSE: 1st {res?.rmse_first.toExponential(2)} · 2nd {res?.rmse_second.toExponential(2)})</div>
+        <div className="mb-1 t-xs text-[var(--text-2)]" dir="rtl">שגיאה מוחלטת (RMSE: 1st {res?.rmse_first.toExponential(2)} · 2nd {res?.rmse_second.toExponential(2)})</div>
         <ResponsiveContainer width="100%" height={190}>
           <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid {...gridProps} />
             <XAxis dataKey="s" type="number" domain={['dataMin', 'dataMax']} {...axisProps} />
             <YAxis {...axisProps} width={48} scale="linear" />
             <Tooltip {...tooltipProps} formatter={numExp(2)} />
-            <Line dataKey="e1" name="|err| 1st" stroke="#d7a54a" dot={false} isAnimationActive={false} />
-            <Line dataKey="e2" name="|err| 2nd" stroke="#3ec7c2" dot={false} isAnimationActive={false} />
+            <Line dataKey="e1" name="|err| 1st" stroke={CHART.secondary} dot={false} isAnimationActive={false} />
+            <Line dataKey="e2" name="|err| 2nd" stroke={CHART.tertiary} dot={false} isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <div className="space-y-1 text-[11px]" dir="ltr">
+      <div className="space-y-1 t-xs" dir="ltr">
         {res && (
           <>
-            <div className="text-slate-400">f(c₀) = <span className="num text-slate-100">{res.f0.toFixed(5)}</span></div>
-            <div className="text-slate-400">∇f (autograd):</div>
+            <div className="text-[var(--text-2)]">f(c₀) = <span className="num text-[var(--text-1)]">{res.f0.toFixed(5)}</span></div>
+            <div className="text-[var(--text-2)]">∇f (autograd):</div>
             {res.components.map((c, i) => (
-              <div key={c} className="num flex justify-between text-slate-200"><span>∂/∂{c}</span><span>{res.gradient[i].toExponential(3)}</span></div>
+              <div key={c} className="num flex justify-between text-[var(--text-1)]"><span>∂/∂{c}</span><span>{res.gradient[i].toExponential(3)}</span></div>
             ))}
-            <div className="text-slate-400">Hessian ({res.selected_ids.join(', ')}):</div>
+            <div className="text-[var(--text-2)]">Hessian ({res.selected_ids.join(', ')}):</div>
             {res.hessian.map((row, i) => (
-              <div key={i} className="num text-slate-200">[{row.map((v) => v.toExponential(2)).join(', ')}]</div>
+              <div key={i} className="num text-[var(--text-1)]">[{row.map((v) => v.toExponential(2)).join(', ')}]</div>
             ))}
-            <div className="text-slate-500">|autograd − FD|: ∇ {res.max_gradient_fd_error.toExponential(1)} · H {res.max_hessian_fd_error.toExponential(1)}</div>
+            <div className="text-[var(--text-3)]">|autograd − FD|: ∇ {res.max_gradient_fd_error.toExponential(1)} · H {res.max_hessian_fd_error.toExponential(1)}</div>
             {res.grid && (
               <div>
-                <div className="text-slate-400" dir="rtl">|שגיאה סדר 2| על רשת Δc ({res.selected_ids[0]}, {res.selected_ids[1]})</div>
+                <div className="text-[var(--text-2)]" dir="rtl">|שגיאה סדר 2| על רשת Δc ({res.selected_ids[0]}, {res.selected_ids[1]})</div>
                 <Heatmap values={res.grid.abs_error_second.flat()} cols={res.grid.delta_b.length} cell={6}
                   ariaLabel="מפת שגיאת הקירוב מסדר שני" color={(v) => seq(Math.min(1, v / Math.max(1e-9, ...res.grid!.abs_error_second.flat())))}
                   labels={(i) => `Δ(${res.grid!.delta_a[Math.floor(i / res.grid!.delta_b.length)].toFixed(2)}, ${res.grid!.delta_b[i % res.grid!.delta_b.length].toFixed(2)})`}

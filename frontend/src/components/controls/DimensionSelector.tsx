@@ -18,8 +18,8 @@ export function DimensionSelector() {
       {s.mode === 'weighted' && AX.map((a, k) => {
         const ax = s.axes[k]
         return (
-          <div key={a} className="rounded border border-slate-800 p-2">
-            <div className="mb-1 text-[11px] font-semibold text-slate-400" dir="ltr">
+          <div key={a} className="rounded border border-[var(--line-1)] p-2">
+            <div className="mb-1 t-xs font-semibold text-[var(--text-2)]" dir="ltr">
               {a} = {(1 - ax.mix).toFixed(2)}·z{ax.primary} + {ax.mix.toFixed(2)}·z{ax.secondary}
             </div>
             <Slider label="ממד ראשי" value={ax.primary} min={0} max={255} onChange={(v) => s.setAxis(k as 0 | 1 | 2, { primary: v })}

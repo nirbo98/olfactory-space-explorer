@@ -18,7 +18,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'cd ../backend && python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000',
+      command: 'cd ../backend && $( [ -x .venv/bin/python ] && echo .venv/bin/python || echo python3 ) -m uvicorn app.main:app --host 127.0.0.1 --port 8000',
       url: 'http://127.0.0.1:8000/api/v1/health',
       reuseExistingServer: true,
       timeout: 120_000,

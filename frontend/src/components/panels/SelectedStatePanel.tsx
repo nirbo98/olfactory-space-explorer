@@ -21,28 +21,28 @@ export function SelectedStatePanel() {
         <button className="btn-ghost" onClick={focus}>מיקוד מצלמה</button>
       </header>
       {status === 'error' && <div className="warn" role="alert">שגיאת מודל: {error}</div>}
-      {!st ? <div className="text-[12px] text-slate-500">ממתין לתוצאת מודל…</div> : (
-        <div className="space-y-1 text-[12px]">
-          <div className="flex justify-between text-slate-400">
+      {!st ? <div className="t-sm text-[var(--text-3)]">ממתין לתוצאת מודל…</div> : (
+        <div className="space-y-1 t-sm">
+          <div className="flex justify-between text-[var(--text-2)]">
             <span>{source ? `ריח ייחוס ${source}` : 'תערובת שנערכה'}</span>
             <span>{st.temporal ? `פריים ${st.frame} · t=${fmt(st.time, 3)}s · גירוי ${fmt(st.stimulus, 2)}` : 'מצב יציב'}</span>
           </div>
           <div className="grid grid-cols-3 gap-1 text-center" dir="ltr">
             {(['x', 'y', 'z'] as const).map((a, k) => (
-              <div key={a} className="rounded bg-slate-800/60 py-0.5">
-                <div className="text-[10px] uppercase text-slate-500">{a}</div>
+              <div key={a} className="rounded bg-[var(--surface-2)] py-0.5">
+                <div className="t-xs uppercase text-[var(--text-3)]">{a}</div>
                 <div className="num text-sky-100" data-testid={`coord-${a}`}>{p ? p[k].toFixed(3) : '—'}</div>
               </div>
             ))}
           </div>
           {result && (
-            <div className="grid grid-cols-2 gap-x-2 text-[11.5px] text-slate-400">
+            <div className="grid grid-cols-2 gap-x-2 t-sm text-[var(--text-2)]">
               <span>‖Δz‖ מול בסיס (ללא עיכוב)</span>
-              <span className="num text-left text-slate-200" data-testid="baseline-shift">{fmt(result.baseline.embedding_shift_norm, 4)}</span>
+              <span className="num text-left text-[var(--text-1)]" data-testid="baseline-shift">{fmt(result.baseline.embedding_shift_norm, 4)}</span>
               <span>שכן קרוב בייחוס</span>
-              <span className="num text-left text-slate-200">{result.novelty.nearest_sample} · {fmt(result.novelty.nearest_distance, 2)}</span>
+              <span className="num text-left text-[var(--text-1)]">{result.novelty.nearest_sample} · {fmt(result.novelty.nearest_distance, 2)}</span>
               <span>עוצמה (תחזית / מורה)</span>
-              <span className="num text-left text-slate-200">{fmt(st.intensity, 3)} / {fmt(result.teacher_reference?.intensity, 3)}</span>
+              <span className="num text-left text-[var(--text-1)]">{fmt(st.intensity, 3)} / {fmt(result.teacher_reference?.intensity, 3)}</span>
             </div>
           )}
           {result?.novelty.outside_reference && <div className="warn">מחוץ להתפלגות הייחוס (מרחק לשכן הקרוב &gt; אחוזון 95).</div>}

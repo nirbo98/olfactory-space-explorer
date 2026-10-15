@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type AppMode = 'dataset' | 'model' | 'science' | 'explore' | 'simulate' | 'inverse'
+export type AppMode = 'dataset' | 'model' | 'science' | 'validation' | 'explore' | 'simulate' | 'inverse'
 export type BottomTab = 'timeseries' | 'fft' | 'taylor' | 'dose' | 'metrics'
 export type ColorBy = 'cluster' | 'split' | 'family'
 

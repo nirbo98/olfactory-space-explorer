@@ -1,3 +1,4 @@
+import { CHART } from '../../utils/colors'
 import { useEffect, useState } from 'react'
 import { CartesianGrid, Legend, Line, LineChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { api } from '../../services/api'
@@ -24,16 +25,16 @@ export function DoseResponsePanel() {
     lc: Math.log10(c), model: res.receptor_activities[k][j], teacher: res.teacher_receptor_activities?.[k][j],
   })) ?? []
   return (
-    <div className="grid h-full grid-cols-[220px_1fr] gap-3 p-2" data-testid="dose-panel">
-      <div className="space-y-2 text-[12px]">
-        <label className="block text-slate-300">תרכובת
+    <div className="grid h-full grid-cols-1 md:grid-cols-[220px_1fr] gap-3 p-2" data-testid="dose-panel">
+      <div className="space-y-2 t-sm">
+        <label className="block text-[var(--text-2)]">תרכובת
           <select className="input mt-1 w-full" value={cid} onChange={(e) => setCid(e.target.value)}>
             {Array.from({ length: 32 }, (_, i) => `C${String(i + 1).padStart(3, '0')}`).map((c) => <option key={c}>{c}</option>)}
           </select>
         </label>
         <Toggle label="בנוכחות שאר רכיבי התערובת" checked={inMixture} onChange={setInMixture} />
-        <div className="text-slate-400">רצפטור: <b className="text-slate-100">{receptor}</b></div>
-        <p className="text-[11px] text-slate-500">התחום המוצלל = טווח הריכוזים באימון. מחוץ לו המודל מבצע אקסטרפולציה.</p>
+        <div className="text-[var(--text-2)]">רצפטור: <b className="text-[var(--text-1)]">{receptor}</b></div>
+        <p className="t-xs text-[var(--text-3)]">התחום המוצלל = טווח הריכוזים באימון. מחוץ לו המודל מבצע אקסטרפולציה.</p>
       </div>
       <div dir="ltr">
         <ResponsiveContainer width="100%" height={200}>
@@ -42,11 +43,11 @@ export function DoseResponsePanel() {
             <XAxis dataKey="lc" type="number" domain={['dataMin', 'dataMax']} {...axisProps}
               tickFormatter={(v) => `1e${Number(v).toFixed(0)}`} />
             <YAxis {...axisProps} width={44} domain={[0, 'auto']} />
-            <ReferenceArea x1={Math.log10(0.02)} x2={Math.log10(res?.training_range_max ?? 2)} fill="#2a5b7a" fillOpacity={0.14} />
+            <ReferenceArea x1={Math.log10(0.02)} x2={Math.log10(res?.training_range_max ?? 2)} fill={CHART.band} fillOpacity={0.14} />
             <Tooltip {...tooltipProps} formatter={num(4)} labelFormatter={(l) => `c = ${(10 ** Number(l)).toPrecision(3)}`} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Line dataKey="model" name={`model r ${receptor}`} stroke="#7ee0ff" dot={false} strokeWidth={2} isAnimationActive={false} />
-            <Line dataKey="teacher" name="synthetic teacher" stroke="#e8f1ff" dot={false} strokeDasharray="4 3" isAnimationActive={false} />
+            <Line dataKey="model" name={`model r ${receptor}`} stroke={CHART.primary} dot={false} strokeWidth={2} isAnimationActive={false} />
+            <Line dataKey="teacher" name="synthetic teacher" stroke={CHART.reference} dot={false} strokeDasharray="4 3" isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>

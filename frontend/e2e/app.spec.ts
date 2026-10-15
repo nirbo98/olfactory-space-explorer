@@ -166,7 +166,7 @@ test('Science & Computations tab: navigation, content, and the simulation still 
   const panel = page.getByTestId('science-panel')
   await expect(panel).toBeVisible()
   await expect(panel).toContainText('נתוני הדמו סינתטיים')
-  await expect(page.getByTestId('odor-space').locator('canvas')).toBeVisible()   // scene stays mounted
+  await expect(page.getByTestId('odor-space').locator('canvas')).toBeAttached()  // scene stays mounted (hidden behind the page)
 
   // all eight computation notes expand and show their content
   const notes = panel.locator('details')
@@ -182,7 +182,7 @@ test('Science & Computations tab: navigation, content, and the simulation still 
 
   // literature links: DOI targets, opened safely in a new tab
   const links = panel.locator('a[href^="https://doi.org/10."]')
-  await expect(links).toHaveCount(8)
+  await expect(links).toHaveCount(10)
   for (const l of await links.all()) {
     await expect(l).toHaveAttribute('target', '_blank')
     await expect(l).toHaveAttribute('rel', /noopener/)
@@ -201,5 +201,38 @@ test('Science & Computations tab: navigation, content, and the simulation still 
   expect(JSON.parse(calls.at(-1)!).mixture[0]).toEqual({ compound_id: 'C001', concentration: 1.4 })
   await expect.poll(async () => (await Promise.all(['coord-x', 'coord-y', 'coord-z'].map((id) => num(page, id)))).join())
     .not.toBe(before.join())
+  expect(errors).toEqual([])
+})
+
+test('Validation tab: real-data benchmark, verdicts, protocol switch, link from model metrics', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  await open(page)
+  // the synthetic metrics panel points to the real-data validation
+  await page.getByTestId('analysis-metrics').click()
+  await expect(page.getByTestId('metrics-caveat')).toContainText('מורה סינתטי')
+  await page.getByTestId('goto-validation').click()
+  await expect(page.getByTestId('tab-validation')).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByTestId('provenance-badge')).toContainText('נתוני בני אדם אמיתיים')
+
+  const report = page.getByTestId('validation-page')
+  await expect(report).toBeVisible()
+  await expect(page.getByTestId('real-data-badge')).toContainText('55')
+  for (const h of ['H1', 'H2', 'H3', 'H3b', 'H4']) await expect(page.getByTestId(`verdict-${h}`)).toBeVisible()
+  await expect(page.getByTestId('dot-row-INTENSITY')).toBeVisible()
+  await expect(page.getByTestId('dotplot').locator('[data-testid^="dot-row-"]')).toHaveCount(22)
+  await page.screenshot({ path: `${SHOTS}/12-validation.png`, fullPage: true })
+
+  const scaffold = await page.getByTestId('stat-ose').innerText()
+  await page.getByTestId('protocol-random').click()
+  await expect(page.getByTestId('verdict-H3')).toHaveCount(0)          // verdicts belong to the primary protocol
+  expect(await page.getByTestId('stat-ose').innerText()).not.toBe(scaffold)
+
+  // keyboard: arrow navigation between header tabs, then back to the lab with the scene intact
+  await page.getByTestId('tab-validation').focus()
+  await page.keyboard.press('ArrowRight')                                // RTL: previous tab
+  await expect(page.getByTestId('tab-science')).toHaveAttribute('aria-selected', 'true')
+  await page.getByTestId('tab-explore').click()
+  await expect(page.getByTestId('odor-space').locator('canvas')).toBeVisible()
   expect(errors).toEqual([])
 })

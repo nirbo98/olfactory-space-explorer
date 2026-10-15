@@ -12,7 +12,7 @@ export function ExploreOptions() {
         <Toggle label="מסלול זמני" checked={v.showTrajectory} onChange={(x) => v.set({ showTrajectory: x })} />
         <Toggle label="רשת" checked={v.showGrid} onChange={(x) => v.set({ showGrid: x })} />
       </div>
-      <label className="flex items-center justify-between text-[12px] text-slate-300">
+      <label className="flex items-center justify-between t-sm text-[var(--text-2)]">
         צביעה לפי
         <select className="input" value={v.colorBy} onChange={(e) => v.set({ colorBy: e.target.value as ColorBy })}>
           <option value="cluster">אשכול (k-means ב-256D)</option>

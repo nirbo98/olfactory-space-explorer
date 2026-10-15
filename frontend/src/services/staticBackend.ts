@@ -13,7 +13,7 @@ import { BASE_URL } from './mode'
 import { analyze } from '../mathematics/fourier'
 import type {
   AtlasResponse, Compound, ConfigResponse, DatasetsResponse, DoseResponse, FourierResponse, InverseResponse,
-  MetricsResponse, MixtureComponent, Scenario, SimulateRequest, SimulateResponse, TaylorResponse,
+  MetricsResponse, MixtureComponent, Scenario, SimulateRequest, SimulateResponse, TaylorResponse, ValidationResponse,
 } from '../types/api'
 
 type Ort = typeof OrtNS
@@ -162,6 +162,7 @@ export const staticBackend = {
   compounds: getCompounds,
   datasets: () => json<DatasetsResponse>('datasets.json'),
   metrics: () => json<MetricsResponse>('metrics.json'),
+  validation: () => json<ValidationResponse>('validation.json'),
 
   async simulate(body: SimulateRequest, signal?: AbortSignal): Promise<SimulateResponse> {
     const cfg = await getConfig()

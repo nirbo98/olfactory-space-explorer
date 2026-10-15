@@ -166,8 +166,21 @@ export interface MetricsResponse {
   note: string
 }
 
+export interface ExperimentalDatasetInfo {
+  id: string
+  kind: 'experimental'
+  provenance: string
+  label: string
+  label_he: string
+  citation: string
+  license: string
+  role: 'validation'
+}
+
 export interface DatasetsResponse {
   active: string
+  /** datasets[0] is always the synthetic demo; real datasets follow in `validation_datasets`. */
+  validation_datasets?: ExperimentalDatasetInfo[]
   datasets: {
     id: string
     kind: string
@@ -256,4 +269,46 @@ export interface InverseResponse {
   reference_nn_median: number
   provenance: string
   model_status: string
+}
+
+// ── real-data validation (backend/app/validation/benchmark.py, schema ose.validation.v1) ──
+export type Interval = [number | null, number | null]
+export interface TargetScore { r: number | null; ci: Interval; frac_ceiling: number | null }
+export interface DoseScore {
+  sign_agreement: number; ci: Interval; n: number; r_delta: number | null; observed_increase_fraction: number | null
+}
+export interface Delta { vs: string; delta_mean_r: number; ci: Interval }
+export interface Verdict {
+  supported: boolean
+  outcome?: 'ose_better' | 'ose_worse' | 'no_detectable_difference'
+  evidence: Record<string, unknown>
+  /** annotation added after the first run — never changes `supported` */
+  post_hoc?: { majority_rate: number | null; beats_majority: boolean; note: string }
+}
+export interface ProtocolResult {
+  per_target: Record<string, Record<string, TargetScore>>
+  summary: Record<string, { mean_r: number; mean_r_ci: Interval; mean_frac_ceiling: number }>
+  dose: Record<string, DoseScore>
+  verdicts: Record<string, Verdict> | null
+  deltas: Record<string, Delta>
+  n_folds: number
+}
+export interface Ceiling {
+  r_half: number; r_half_sd: number; reliability: number; ceiling: number; n_splits: number
+  test_retest: { r: number | null; n_pairs: number } | null
+}
+export interface ValidationResponse {
+  schema: 'ose.validation.v1'
+  dataset: {
+    id: string; kind: string; provenance: string; citation: string; license: string; doi: string; source: string
+    n_subjects: number; n_stimuli: number; n_molecules_total: number; n_molecules_used: number; n_scaffold_groups: number
+    targets: string[]; coding_rules: string[]
+  }
+  metric: string
+  models: Record<string, string>
+  protocol_labels: Record<string, string>
+  ceilings: Record<string, Ceiling>
+  protocols: Record<string, ProtocolResult>
+  config: Record<string, unknown>
+  environment: Record<string, unknown>
 }

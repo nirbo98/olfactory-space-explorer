@@ -41,15 +41,15 @@ export function ReceptorActivityPanel() {
           color={(v) => (view === 'difference' && !st.temporal ? div(v / maxAbs) : seq(v))}
           labels={(i) => rids[i]} highlight={highlight} selected={rids.indexOf(selected)}
           onSelect={(i) => selectReceptor(rids[i])} format={(v) => v.toFixed(4)} />
-        <div className="flex-1 space-y-1 text-[11px] text-slate-400">
-          <div>{selected}: <span className="num text-slate-100" data-testid="selected-receptor-value">{st.receptor[rids.indexOf(selected)]?.toFixed(4)}</span></div>
-          {teacher && !st.temporal && <div>מורה: <span className="num text-slate-200">{teacher[rids.indexOf(selected)]?.toFixed(4)}</span></div>}
-          {mae !== null && <div title="שגיאה מוחלטת ממוצעת מול מודל המורה הסינתטי עבור התערובת הנוכחית">MAE מול מורה: <span className="num text-slate-200">{mae.toFixed(4)}</span></div>}
-          <div className="text-slate-500">לחיצה על תא בוחרת רצפטור. ⟋ = מעוכב.</div>
+        <div className="flex-1 space-y-1 t-xs text-[var(--text-2)]">
+          <div>{selected}: <span className="num text-[var(--text-1)]" data-testid="selected-receptor-value">{st.receptor[rids.indexOf(selected)]?.toFixed(4)}</span></div>
+          {teacher && !st.temporal && <div>מורה: <span className="num text-[var(--text-1)]">{teacher[rids.indexOf(selected)]?.toFixed(4)}</span></div>}
+          {mae !== null && <div title="שגיאה מוחלטת ממוצעת מול מודל המורה הסינתטי עבור התערובת הנוכחית">MAE מול מורה: <span className="num text-[var(--text-1)]">{mae.toFixed(4)}</span></div>}
+          <div className="text-[var(--text-3)]">לחיצה על תא בוחרת רצפטור. ⟋ = מעוכב.</div>
         </div>
       </div>
       {!st.temporal && <BarStrip values={st.receptor} ref2={teacher} testId="receptor-bars" />}
-      {!st.temporal && teacher && <div className="text-[10.5px] text-slate-500">עמודות: תחזית התלמיד · קווים: מורה סינתטי (אמת-מידה מדומה)</div>}
+      {!st.temporal && teacher && <div className="t-xs text-[var(--text-3)]">עמודות: תחזית התלמיד · קווים: מורה סינתטי (אמת-מידה מדומה)</div>}
     </div>
   )
 }

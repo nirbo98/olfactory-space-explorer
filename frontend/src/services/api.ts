@@ -1,7 +1,7 @@
 import { STATIC_MODE } from './mode'
 import type {
   AtlasResponse, Compound, ConfigResponse, DatasetsResponse, DoseResponse, FourierResponse, InverseResponse,
-  MetricsResponse, MixtureComponent, SimulateRequest, SimulateResponse, TaylorResponse,
+  MetricsResponse, MixtureComponent, SimulateRequest, SimulateResponse, TaylorResponse, ValidationResponse,
 } from '../types/api'
 
 const BASE = '/api/v1'
@@ -39,6 +39,7 @@ const httpApi = {
   compounds: () => request<{ compounds: Compound[] }>('/compounds'),
   datasets: () => request<DatasetsResponse>('/datasets'),
   metrics: () => request<MetricsResponse>('/model/metrics'),
+  validation: () => request<ValidationResponse>('/validation'),
   simulate: (body: SimulateRequest, signal?: AbortSignal) => post<SimulateResponse>('/simulate', body, signal),
   fourier: (body: { signal: number[]; sample_spacing: number; band?: [number, number] | null; remove_mean?: boolean }, signal?: AbortSignal) =>
     post<FourierResponse>('/analyze/fourier', body, signal),

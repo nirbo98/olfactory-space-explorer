@@ -1,3 +1,4 @@
+import { CHART, CATEGORICAL } from '../../utils/colors'
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine } from 'recharts'
 import { useInverseDesignStore } from '../../store/inverseDesignStore'
 import { useDatasetStore } from '../../store/datasetStore'
@@ -14,7 +15,7 @@ import { STATIC_MODE } from '../../services/mode'
 import { selectSample } from '../../services/actions'
 import { INVERSE_API_MAX_COMPONENTS, INVERSE_UI_DEFAULT_COMPONENTS, PAGES_INVERSE_PARAMS } from '../../config/inverseLimits'
 
-const RUN_COLORS = ['#7ee0ff', '#5b8def', '#3ec7c2', '#d7a54a', '#c26fd6', '#7fbf6a', '#e07a6a', '#9aa7b8']
+const RUN_COLORS = CATEGORICAL
 
 export function InverseDesignPanel() {
   const inv = useInverseDesignStore()
@@ -47,9 +48,9 @@ export function InverseDesignPanel() {
   return (
     <>
       <Section title="מטרה">
-        <p className="text-[11.5px] text-slate-400">בחרו ריח ייחוס בענן כמטרה. ניתן לגרור את המטרה (◆) בתלת-ממד: z_target = z + P⁺Δp — הרמה במינימום נורמה, בחירה אחת מתוך אינסוף וקטורים בעלי אותה הטלה.</p>
-        <div className="text-[12px]" data-testid="inverse-target">
-          {inv.targetSampleId ? <>מטרה: <b className="text-pink-300">{inv.targetSampleId}</b>{lifted && <> · הוזזה Δp = <span className="num" dir="ltr">({inv.liftedDelta.map((v) => v.toFixed(2)).join(', ')})</span></>}</> : <span className="text-slate-500">לא נבחרה מטרה</span>}
+        <p className="t-sm text-[var(--text-2)]">בחרו ריח ייחוס בענן כמטרה. ניתן לגרור את המטרה (◆) בתלת-ממד: z_target = z + P⁺Δp — הרמה במינימום נורמה, בחירה אחת מתוך אינסוף וקטורים בעלי אותה הטלה.</p>
+        <div className="t-sm" data-testid="inverse-target">
+          {inv.targetSampleId ? <>מטרה: <b className="text-pink-300">{inv.targetSampleId}</b>{lifted && <> · הוזזה Δp = <span className="num" dir="ltr">({inv.liftedDelta.map((v) => v.toFixed(2)).join(', ')})</span></>}</> : <span className="text-[var(--text-3)]">לא נבחרה מטרה</span>}
         </div>
         {inv.baseEmbedding && canLift && (['X', 'Y', 'Z'] as const).map((a, k) => (
           <Slider key={a} label={`הזזה מבוקרת Δp ${a}`} value={inv.liftedDelta[k]} min={-3} max={3} step={0.05}
@@ -83,12 +84,12 @@ export function InverseDesignPanel() {
         <Slider label="משקל דלילות λ" value={Math.log10(STATIC_MODE ? PAGES_INVERSE_PARAMS.sparsityWeight : inv.sparsityWeight)} min={-5} max={0} step={0.1}
           onChange={(v) => inv.setParams({ sparsityWeight: 10 ** v })} format={(v) => `1e${v.toFixed(1)}`} disabled={STATIC_MODE} />
         <div>
-          <div className="mb-1 flex justify-between text-[11.5px] text-slate-400"><span>תרכובות מותרות ({allowed.length})</span>
+          <div className="mb-1 flex justify-between t-sm text-[var(--text-2)]"><span>תרכובות מותרות ({allowed.length})</span>
             <button className="btn-ghost" onClick={() => inv.setParams({ allowed: null })}>הכול</button></div>
           <div className="grid grid-cols-6 gap-0.5" dir="ltr">
             {compounds.map((c) => (
               <button key={c.compound_id} onClick={() => toggle(c.compound_id)} title={`${c.name} · ${c.family}${c.heldout ? ' · מוחזקת' : ''}`}
-                className={`rounded px-0.5 py-0.5 text-[10px] ${allowed.includes(c.compound_id) ? 'bg-sky-800/60 text-sky-100' : 'bg-slate-800/40 text-slate-600'} ${c.heldout ? 'underline decoration-red-400/70' : ''}`}>
+                className={`rounded px-0.5 py-0.5 t-xs ${allowed.includes(c.compound_id) ? 'bg-sky-800/60 text-sky-100' : 'bg-[var(--surface-2)] text-[var(--text-4)]'} ${c.heldout ? 'underline decoration-red-400/70' : ''}`}>
                 {c.compound_id.slice(1)}
               </button>
             ))}
@@ -104,17 +105,17 @@ export function InverseDesignPanel() {
         <Section title="מועמדים">
           <div className="warn">אופטימיזציה על המודל המאומן בלבד — אין זו הוכחה שהתערובת משחזרת ריח פיזיקלית.</div>
           {res.warnings.map((w) => <div key={w} className="warn">{translateWarning(w)}</div>)}
-          <div className="text-[11px] text-slate-400">מרחק טיפוסי לשכן קרוב בייחוס: <span className="num">{fmt(res.reference_nn_median, 2)}</span></div>
+          <div className="t-xs text-[var(--text-2)]">מרחק טיפוסי לשכן קרוב בייחוס: <span className="num">{fmt(res.reference_nn_median, 2)}</span></div>
           <div className="space-y-1" data-testid="inverse-candidates">
             {res.candidates.map((c, i) => (
-              <div key={i} className={`rounded border p-1.5 text-[11.5px] ${i === 0 ? 'border-sky-500/50' : 'border-slate-800'}`}>
+              <div key={i} className={`rounded border p-1.5 t-sm ${i === 0 ? 'border-sky-500/50' : 'border-[var(--line-1)]'}`}>
                 <div className="flex justify-between">
-                  <span>#{i + 1} · מרחק חזוי <b className="num text-slate-100">{c.distance.toFixed(3)}</b></span>
+                  <span>#{i + 1} · מרחק חזוי <b className="num text-[var(--text-1)]">{c.distance.toFixed(3)}</b></span>
                   <button className="btn-ghost" onClick={() => { setMixture(c.components); select(null); setVis({ mode: 'simulate' }) }}>לסימולציה</button>
                 </div>
-                <div className="num text-slate-300" dir="ltr">{c.components.map((x) => `${x.compound_id}:${x.concentration.toFixed(3)}`).join('  ')}</div>
+                <div className="num text-[var(--text-2)]" dir="ltr">{c.components.map((x) => `${x.compound_id}:${x.concentration.toFixed(3)}`).join('  ')}</div>
                 {(c.on_bound.length > 0 || c.uses_heldout_compounds.length > 0 || c.novelty.outside_reference) && (
-                  <div className="text-[10.5px] text-amber-300">
+                  <div className="t-xs text-amber-300">
                     {c.on_bound.length > 0 && `בגבול הריכוז: ${c.on_bound.join(',')} `}
                     {c.uses_heldout_compounds.length > 0 && `· תרכובות מוחזקות: ${c.uses_heldout_compounds.join(',')} `}
                     {c.novelty.outside_reference && '· מחוץ להתפלגות הייחוס'}
@@ -124,16 +125,16 @@ export function InverseDesignPanel() {
             ))}
           </div>
           <div dir="ltr">
-            <div className="text-[11px] text-slate-400" dir="rtl">התכנסות: ‖F(c) − z_target‖ לכל אתחול</div>
+            <div className="t-xs text-[var(--text-2)]" dir="rtl">התכנסות: ‖F(c) − z_target‖ לכל אתחול</div>
             <ResponsiveContainer width="100%" height={120}>
               <LineChart data={hist} margin={{ top: 4, right: 6, bottom: 0, left: 0 }}>
                 <XAxis dataKey="k" type="number" {...axisProps} />
                 <YAxis {...axisProps} width={34} domain={[0, 'auto']} />
-                <ReferenceLine x={res.phase1_steps} stroke="#d7a54a" strokeDasharray="3 3" />
+                <ReferenceLine x={res.phase1_steps} stroke={CHART.secondary} strokeDasharray="3 3" />
                 {res.history.map((_, s) => <Line key={s} dataKey={`s${s}`} stroke={RUN_COLORS[s % RUN_COLORS.length]} dot={false} strokeWidth={1} isAnimationActive={false} />)}
               </LineChart>
             </ResponsiveContainer>
-            <div className="text-[10.5px] text-slate-500" dir="rtl">קו מקווקו: אכיפת מגבלת מספר הרכיבים ושלב עידון.</div>
+            <div className="t-xs text-[var(--text-3)]" dir="rtl">קו מקווקו: אכיפת מגבלת מספר הרכיבים ושלב עידון.</div>
           </div>
         </Section>
       )}

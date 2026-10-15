@@ -3,7 +3,7 @@ import { CartesianGrid, Legend, Line, LineChart, ReferenceArea, ReferenceLine, R
 import { useSimulationStore } from '../../store/simulationStore'
 import { useMixtureStore } from '../../store/mixtureStore'
 import { useDatasetStore } from '../../store/datasetStore'
-import { seq } from '../../utils/colors'
+import { CHART, seq } from '../../utils/colors'
 import { axisProps, gridProps, num, tooltipProps } from './chartTheme'
 
 function ReceptorTimeHeatmap({ data, time, dt }: { data: number[][]; time: number; dt: number }) {
@@ -41,10 +41,10 @@ export function TimeSeriesPanel() {
     t, stimulus: tr.stimulus[k], receptor: tr.receptor_activities[k][j], bulb: tr.bulb_activities[k][j],
     intensity: tr.intensity_prediction[k] / 4, compare: ctr?.receptor_activities[k]?.[j],
   })) ?? [], [tr, ctr, j])
-  if (!tr) return <div className="p-3 text-[12px] text-slate-500">אין מסלול זמן.</div>
+  if (!tr) return <div className="p-3 t-sm text-[var(--text-3)]">אין מסלול זמן.</div>
   const sc = tr.scenario
   return (
-    <div className="grid h-full grid-cols-[1fr_300px] gap-3 p-2">
+    <div className="grid h-full grid-cols-1 md:grid-cols-[1fr_300px] gap-3 p-2">
       <div dir="ltr" data-testid="timeseries-chart">
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={data} margin={{ top: 6, right: 12, bottom: 2, left: 0 }}>
@@ -52,21 +52,21 @@ export function TimeSeriesPanel() {
             <XAxis dataKey="t" type="number" domain={[0, tr.times.at(-1)!]} {...axisProps} unit="s" tickFormatter={(v) => Number(v).toFixed(1)} />
             <YAxis {...axisProps} width={40} />
             <Tooltip {...tooltipProps} formatter={num(4)} labelFormatter={(t) => `t = ${Number(t).toFixed(3)} s`} />
-            <ReferenceArea x1={sc.onset} x2={sc.onset + sc.duration} fill="#2a5b7a" fillOpacity={0.12} />
-            <ReferenceLine x={time} stroke="#e8f1ff" strokeOpacity={0.7} />
+            <ReferenceArea x1={sc.onset} x2={sc.onset + sc.duration} fill={CHART.band} fillOpacity={0.12} />
+            <ReferenceLine x={time} stroke={CHART.reference} strokeOpacity={0.7} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Line dataKey="stimulus" name="stimulus m(t)" stroke="#6b7a8f" dot={false} strokeDasharray="4 3" isAnimationActive={false} />
-            <Line dataKey="receptor" name={`r ${selected}`} stroke="#7ee0ff" dot={false} strokeWidth={1.8} isAnimationActive={false} />
-            <Line dataKey="bulb" name={`h bulb ${j + 1}`} stroke="#d7a54a" dot={false} isAnimationActive={false} />
-            <Line dataKey="intensity" name="intensity/4" stroke="#7fbf6a" dot={false} isAnimationActive={false} />
-            {ctr && <Line dataKey="compare" name={`r ${selected} (${compare?.sampleId})`} stroke="#c26fd6" dot={false} isAnimationActive={false} />}
+            <Line dataKey="stimulus" name="stimulus m(t)" stroke={CHART.muted} dot={false} strokeDasharray="4 3" isAnimationActive={false} />
+            <Line dataKey="receptor" name={`r ${selected}`} stroke={CHART.primary} dot={false} strokeWidth={1.8} isAnimationActive={false} />
+            <Line dataKey="bulb" name={`h bulb ${j + 1}`} stroke={CHART.secondary} dot={false} isAnimationActive={false} />
+            <Line dataKey="intensity" name="intensity/4" stroke={CHART.quaternary} dot={false} isAnimationActive={false} />
+            {ctr && <Line dataKey="compare" name={`r ${selected} (${compare?.sampleId})`} stroke={CHART.quinary} dot={false} isAnimationActive={false} />}
           </LineChart>
         </ResponsiveContainer>
       </div>
       <div className="space-y-2">
-        <div className="text-[11px] text-slate-400">רצפטורים × זמן (שורה לכל רצפטור)</div>
+        <div className="t-xs text-[var(--text-2)]">רצפטורים × זמן (שורה לכל רצפטור)</div>
         <ReceptorTimeHeatmap data={tr.receptor_activities} time={time} dt={tr.dt} />
-        <label className="flex items-center gap-1 text-[12px] text-slate-300">
+        <label className="flex items-center gap-1 t-sm text-[var(--text-2)]">
           השוואת מסלול עם
           <select className="input flex-1" value={compare?.sampleId ?? ''} onChange={(e) => setCompare(e.target.value || null)}
             data-testid="compare-select">

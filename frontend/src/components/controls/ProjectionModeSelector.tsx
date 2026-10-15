@@ -24,13 +24,13 @@ export function ProjectionModeSelector() {
           </button>
         ))}
       </div>
-      <p className="text-[11px] leading-snug text-slate-500">{MODES.find((m) => m.id === s.mode)?.desc}. שינוי ההטלה משנה רק את נקודת המבט — המודל אינו מחושב מחדש.</p>
+      <p className="t-xs leading-snug text-[var(--text-3)]">{MODES.find((m) => m.id === s.mode)?.desc}. שינוי ההטלה משנה רק את נקודת המבט — המודל אינו מחושב מחדש.</p>
       {s.mode === 'pca' && ref && (
         <div className="grid grid-cols-3 gap-1 text-center" dir="ltr">
           {ref.explainedVarianceRatio.map((v, k) => (
-            <div key={k} className="rounded bg-slate-800/60 px-1 py-1">
-              <div className="text-[10px] text-slate-400">PC{k + 1}</div>
-              <div className="num text-[12px] text-sky-100">{(v * 100).toFixed(1)}%</div>
+            <div key={k} className="rounded bg-[var(--surface-2)] px-1 py-1">
+              <div className="t-xs text-[var(--text-2)]">PC{k + 1}</div>
+              <div className="num t-sm text-sky-100">{(v * 100).toFixed(1)}%</div>
             </div>
           ))}
         </div>
@@ -46,7 +46,7 @@ export function ProjectionModeSelector() {
           {Object.keys(s.presets).map((p) => (
             <span key={p} className="chip">
               <button onClick={() => s.loadPreset(p)}>{p}</button>
-              <button aria-label={`מחיקת ${p}`} onClick={() => s.deletePreset(p)} className="text-slate-500">×</button>
+              <button aria-label={`מחיקת ${p}`} onClick={() => s.deletePreset(p)} className="text-[var(--text-3)]">×</button>
             </span>
           ))}
         </div>

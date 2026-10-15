@@ -14,7 +14,7 @@ export function BulbActivityPanel() {
     <div className="panel-section" data-testid="bulb-panel">
       <header className="mb-1 flex items-center justify-between">
         <h3 className="section-title">בולבוס הריח b (64)</h3>
-        <span className="text-[10.5px] text-slate-500">עיכוב צידי: {(lat ?? trained) ? 'פעיל' : 'כבוי'} · max {max.toFixed(3)}</span>
+        <span className="t-xs text-[var(--text-3)]">עיכוב צידי: {(lat ?? trained) ? 'פעיל' : 'כבוי'} · max {max.toFixed(3)}</span>
       </header>
       <Heatmap values={st.bulb} cols={16} cell={14} ariaLabel="פעילות יחידות הבולבוס" color={(v) => seq(v / max)}
         labels={(i) => `B${i + 1}`} testId="bulb-heatmap" />

@@ -11,7 +11,7 @@ export function ReceptorKnockoutControls() {
   const trainedSparsity = cfg?.model_config.sparsity
   return (
     <>
-      <Section title="רצפטורים מדומים" aside={<span className="text-[10.5px] text-slate-500">ערוצים חישוביים, לא רצפטורים אנושיים</span>}>
+      <Section title="רצפטורים מדומים" aside={<span className="t-xs text-[var(--text-3)]">ערוצים חישוביים, לא רצפטורים אנושיים</span>}>
         <select className="input w-full" value={m.selectedReceptor} onChange={(e) => m.selectReceptor(e.target.value)}
           aria-label="בחירת רצפטור" data-testid="receptor-select">
           {rids.map((r) => <option key={r} value={r}>{r}{m.knockdowns[r] ? ` (−${Math.round(m.knockdowns[r] * 100)}%)` : ''}</option>)}
@@ -44,7 +44,7 @@ export function ReceptorKnockoutControls() {
             format={(v) => `${Math.round(v * 100)}%`} testId="sparsity-slider" />
         )}
         {(m.sparsityMode !== 'trained' || m.lateralInhibition !== null) && (
-          <p className="text-[11px] text-amber-300/90">אבלציה בזמן היסק: המודל אומן בתנאים אחרים.</p>
+          <p className="t-xs text-amber-300/90">אבלציה בזמן היסק: המודל אומן בתנאים אחרים.</p>
         )}
       </Section>
     </>

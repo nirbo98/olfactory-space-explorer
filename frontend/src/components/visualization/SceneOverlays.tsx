@@ -25,10 +25,10 @@ export function SceneOverlays() {
       </div>
       {h && pos && (
         <div className="tooltip pointer-events-none absolute" style={{ left: pos[0], top: pos[1] }} dir="rtl" data-testid="point-tooltip">
-          <div className="num text-[11px] text-sky-200">{h.id} · אשכול {h.cluster + 1}</div>
-          <div dir="ltr" className="num text-[11px]">{h.components.map((c) => `${c.compound_id}·${c.concentration}`).join('  ')}</div>
-          <div className="text-[11px] text-slate-400">{SPLIT_HE[h.split]}</div>
-          <div className="text-[11px] text-slate-400">מתארים חזויים (סינתטי): {h.top_descriptors.map((d) => DESCRIPTOR_HE[d] ?? d).join(', ')}</div>
+          <div className="num t-xs text-sky-200">{h.id} · אשכול {h.cluster + 1}</div>
+          <div dir="ltr" className="num t-xs">{h.components.map((c) => `${c.compound_id}·${c.concentration}`).join('  ')}</div>
+          <div className="t-xs text-[var(--text-2)]">{SPLIT_HE[h.split]}</div>
+          <div className="t-xs text-[var(--text-2)]">מתארים חזויים (סינתטי): {h.top_descriptors.map((d) => DESCRIPTOR_HE[d] ?? d).join(', ')}</div>
         </div>
       )}
     </>

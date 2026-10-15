@@ -1,30 +1,43 @@
 @import "tailwindcss";
 
+/* Colours come from src/theme/tokens.ts (applyTheme sets them on :root at startup). */
 :root {
-  --bg: #0a0e13;
-  --panel: #0f141b;
-  --line: #1f2a36;
-  --text: #d6dde6;
-  --muted: #7d8a99;
-  --accent: #7ee0ff;
   color-scheme: dark;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 13.5px;
+  --fs-lg: 16px;
+  --radius: 5px;
 }
 
 html, body, #root { height: 100%; }
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--surface-0);
+  color: var(--text-1);
   font-family: 'IBM Plex Sans Hebrew', system-ui, sans-serif;
-  font-size: 13px;
+  font-size: var(--fs-base);
+  line-height: 1.5;
 }
 .num, code { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 
+/* type scale — the only four text sizes in the app */
+.t-xs { font-size: var(--fs-xs); }
+.t-sm { font-size: var(--fs-sm); }
+.t-base { font-size: var(--fs-base); }
+.t-lg { font-size: var(--fs-lg); }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+/* ── layout ───────────────────────────────────────────────── */
 .app-shell {
   height: 100vh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto 280px;
 }
+.app-shell.page-mode { grid-template-rows: auto minmax(0, 1fr); }
+.app-header { background: var(--surface-1); border-bottom: 1px solid var(--line-1); }
+.bottom-strip { background: var(--surface-1); border-top: 1px solid var(--line-1); }
 /* RTL grid: the first area renders on the right. Controls end up on the left, readouts on the right, as specified. */
 .main-grid {
   display: grid;
@@ -32,47 +45,63 @@ body {
   grid-template-columns: 330px minmax(0, 1fr) 330px;
   grid-template-areas: "readouts scene controls";
 }
+.page-scroll { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.page { max-width: 920px; margin-inline: auto; padding: 28px 24px 64px; }
 @media (max-width: 1100px) {
   .app-shell { grid-template-rows: auto auto auto auto; height: auto; }
+  .app-shell.page-mode { grid-template-rows: auto auto; }
   .main-grid { grid-template-columns: 1fr; grid-template-areas: "scene" "controls" "readouts"; }
-  .main-grid > div[style*="scene"] { height: 60vh; }
+  .scene-cell { height: 60vh; }
   .side-col { max-height: none; }
 }
+@media (max-width: 640px) { .page { padding: 18px 16px 48px; } }
 .side-col {
   height: 100%;
   overflow-y: auto;
-  background: var(--panel);
-  border-inline: 1px solid var(--line);
+  background: var(--surface-1);
+  border-inline: 1px solid var(--line-1);
   scrollbar-width: thin;
 }
-.panel-section { padding: 10px 12px; border-bottom: 1px solid var(--line); }
-.section-title { font-size: 12px; font-weight: 600; letter-spacing: .02em; color: #aebccd; }
-.slider-row input[type=range] { accent-color: #5b8def; height: 18px; }
-input[type=range] { accent-color: #5b8def; }
+.panel-section { padding: 10px 12px; border-bottom: 1px solid var(--line-1); }
+.section-title { font-size: var(--fs-sm); font-weight: 600; letter-spacing: .02em; color: var(--text-2); }
+.slider-row input[type=range], input[type=range] { accent-color: var(--accent-ui); height: 18px; }
 
+/* ── controls ─────────────────────────────────────────────── */
 .btn, .btn-primary, .btn-ghost, .seg, .tab {
-  border-radius: 4px; font-size: 12px; padding: 4px 8px; transition: background .12s, color .12s;
+  border-radius: var(--radius); font-size: var(--fs-sm); padding: 4px 9px; transition: background .12s, color .12s, border-color .12s;
 }
-.btn { background: #17202a; border: 1px solid #263240; color: #c9d4e0; }
-.btn:hover:not(:disabled) { background: #1e2a37; }
+.btn { background: var(--surface-3); border: 1px solid var(--line-2); color: var(--text-1); }
+.btn:hover:not(:disabled) { background: var(--surface-hover); }
 .btn:disabled, .btn-primary:disabled, .seg:disabled { opacity: .4; cursor: not-allowed; }
-.btn-primary { background: #1f4d73; border: 1px solid #2f6a99; color: #e8f1ff; font-weight: 600; }
-.btn-primary:hover:not(:disabled) { background: #275d8a; }
-.btn-ghost { color: #8fb4d9; padding: 2px 4px; }
-.btn-ghost:hover:not(:disabled) { color: #cfe3f7; }
-.seg { background: #121921; border: 1px solid #222d39; color: #8a97a8; }
-.seg-on { background: #1d3448; border-color: #3a6a92; color: #e8f1ff; }
-.tab { color: #8a97a8; border: 1px solid transparent; }
-.tab-on { color: #e8f1ff; background: #17222e; border-color: #2a3a4b; }
-.input { background: #121921; border: 1px solid #263240; border-radius: 4px; padding: 3px 6px; font-size: 12px; color: #d6dde6; }
-.chip { display: inline-flex; align-items: center; gap: 4px; background: #17202a; border: 1px solid #263240; border-radius: 10px; padding: 1px 8px; font-size: 11px; }
-.warn { background: rgba(215,165,74,.08); border: 1px solid rgba(215,165,74,.35); color: #e9c98a; border-radius: 4px; padding: 4px 8px; font-size: 11.5px; }
-.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12px; }
-.kv dt { color: #7d8a99; }
-.kv dd { margin: 0; color: #d6dde6; }
-.metrics th { font-weight: 600; color: #9fb0c4; text-align: right; padding: 3px 6px; border-bottom: 1px solid var(--line); font-size: 11px; }
-.metrics td { padding: 2px 6px; border-bottom: 1px solid #141b23; text-align: right; }
+.btn-primary { background: var(--accent-strong); border: 1px solid var(--accent-strong-line); color: var(--text-1); font-weight: 600; }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.15); }
+.btn-ghost { color: var(--accent); padding: 2px 4px; }
+.btn-ghost:hover:not(:disabled) { color: var(--text-1); }
+.seg { background: var(--surface-2); border: 1px solid var(--line-1); color: var(--text-3); }
+.seg-on { background: var(--accent-strong); border-color: var(--accent-strong-line); color: var(--text-1); }
+.tab { color: var(--text-3); border: 1px solid transparent; }
+.tab:hover { color: var(--text-1); }
+.tab-on { color: var(--text-1); background: var(--surface-3); border-color: var(--line-2); }
+.tab-group { display: flex; gap: 2px; align-items: center; }
+.tab-group-label { font-size: var(--fs-xs); color: var(--text-4); margin-inline-end: 4px; }
+.tab-divider { width: 1px; align-self: stretch; background: var(--line-2); margin-inline: 8px; }
+.input { background: var(--surface-2); border: 1px solid var(--line-2); border-radius: var(--radius); padding: 3px 6px; font-size: var(--fs-sm); color: var(--text-1); }
+.chip { display: inline-flex; align-items: center; gap: 4px; background: var(--surface-3); border: 1px solid var(--line-2); border-radius: 10px; padding: 1px 8px; font-size: var(--fs-xs); }
 
-.tooltip { background: rgba(10,14,19,.94); border: 1px solid #2a3a4b; border-radius: 4px; padding: 6px 8px; min-width: 200px; transform: translate(10px, -50%); white-space: nowrap; }
-.axis-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; white-space: nowrap; background: rgba(10,14,19,.7); padding: 1px 5px; border-radius: 3px; direction: ltr; }
-.axis-tick { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #4f5d6e; direction: ltr; }
+/* ── provenance & callouts ────────────────────────────────── */
+.warn { background: var(--simulated-bg); border: 1px solid var(--simulated-line); color: var(--simulated); border-radius: var(--radius); padding: 5px 9px; font-size: var(--fs-sm); }
+.real { background: var(--real-bg); border: 1px solid var(--real-line); color: var(--real); border-radius: var(--radius); padding: 5px 9px; font-size: var(--fs-sm); }
+
+/* ── data display ─────────────────────────────────────────── */
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: var(--fs-sm); }
+.kv dt { color: var(--text-3); }
+.kv dd { margin: 0; color: var(--text-1); }
+.kv dd.num { direction: ltr; text-align: end; }
+.metrics th { font-weight: 600; color: var(--text-2); text-align: end; padding: 4px 6px; border-bottom: 1px solid var(--line-1); font-size: var(--fs-xs); }
+.metrics td { padding: 3px 6px; border-bottom: 1px solid var(--surface-2); text-align: end; }
+.card { background: var(--surface-1); border: 1px solid var(--line-1); border-radius: 8px; padding: 14px 16px; }
+.formula { background: var(--surface-0); border: 1px solid var(--line-1); border-radius: var(--radius); padding: 8px 10px; font-family: 'IBM Plex Mono', monospace; font-size: var(--fs-xs); color: var(--accent); direction: ltr; overflow-wrap: anywhere; }
+
+.tooltip { background: rgba(10,14,19,.95); border: 1px solid var(--line-2); border-radius: var(--radius); padding: 6px 8px; min-width: 200px; transform: translate(10px, -50%); white-space: nowrap; }
+.axis-label { font-family: 'IBM Plex Mono', monospace; font-size: var(--fs-xs); white-space: nowrap; background: rgba(10,14,19,.7); padding: 1px 5px; border-radius: 3px; direction: ltr; }
+.axis-tick { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-4); direction: ltr; }
