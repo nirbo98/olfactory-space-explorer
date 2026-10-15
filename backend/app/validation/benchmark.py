@@ -169,6 +169,14 @@ def verdicts(ceil: dict, primary: dict, models) -> dict:
             v["H3b"]["supported"] = v["H3b"]["outcome"] == "ose_better"
         dose = primary["dose"]["ose"]
         v["H4"] = {"supported": dose["sign_agreement"] > 0.8, "evidence": dose}
+        # POST-HOC (added after the first run; not part of the pre-registered rule): the 50% chance
+        # level in the rule is the wrong reference when most molecules get stronger with concentration.
+        # A constant "always increases" predictor scores the observed increase fraction.
+        majority = dose["observed_increase_fraction"]
+        v["H4"]["post_hoc"] = {"majority_rate": majority,
+                               "beats_majority": bool(majority is not None and dose["sign_agreement"] > majority),
+                               "note": "rule passes, but the always-increase predictor scores the same; uninformative"
+                               if majority is not None and dose["sign_agreement"] <= majority else ""}
     return v
 
 

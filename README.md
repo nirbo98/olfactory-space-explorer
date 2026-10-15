@@ -4,6 +4,8 @@ Interactive 3-D research prototype for exploring a **256-dimensional learned odo
 
 > **SIMULATED DATA — NOT EXPERIMENTALLY VALIDATED · נתונים מדומים — לא אומתו בניסוי**
 > The demo runs entirely on a deterministic synthetic teacher model. Read [`documentation/SCIENTIFIC_LIMITATIONS.md`](documentation/SCIENTIFIC_LIMITATIONS.md) before interpreting anything.
+>
+> **Real-data check (Keller & Vosshall 2016, 55 subjects, 478 molecules, pre-registered):** on held-out chemical scaffolds the OSE architecture reaches mean r = 0.10. A random forest on RDKit descriptors reaches 0.45 and a plain MLP 0.19, and the noise-ceiling median is 0.84. The biologically structured model does **not** beat standard chemistry baselines. See [`VALIDATION_KELLER2016_HE.md`](documentation/VALIDATION_KELLER2016_HE.md).
 
 ## Quick start
 
@@ -30,8 +32,9 @@ Or the one-liner `./scripts/bootstrap.sh` (bootstrap + dev).
 | Start frontend | `make frontend` (`cd frontend && npm run dev`) |
 | Production build | `make build` |
 | Ablations (optional, ~15 min) | `make ablations` → `checkpoints/ablations.json` |
+| Real-data validation (optional, ~7 min, needs RDKit) | `make fetch-real` (download + SHA-256 check of Keller 2016) then `make benchmark` → `checkpoints/keller-benchmark.json`; `make export-validation` copies it into the static build |
 
-Optional extras: `pip install -e "backend[chem]"` (RDKit fingerprints from SMILES), `pip install -e "backend[umap]"` (UMAP helper; not invertible, so not used for dragging).
+`make install-backend` now includes the `chem` extra (RDKit, needed for the validation benchmark); `make` uses `backend/.venv` automatically when it exists. Optional: `pip install -e "backend[umap]"` (UMAP helper; not invertible, so not used for dragging).
 
 The repository already contains a trained checkpoint and atlas, so `make install && make dev` is enough to see the demo; `make train` reproduces them (seed 42).
 
@@ -44,9 +47,9 @@ What differs from the local app: simulation, knockouts, ablation switches, playb
 ## Tests
 
 ```bash
-make test-backend    # pytest: 52 tests (model maths, dynamics, projection, Taylor, FFT, inverse bounds, training, API)
-make test-frontend   # tsc + vitest: 28 tests (projection and DFT twins vs Python fixtures, sliders, controller, playback)
-make test-e2e        # Playwright: 8 scenarios on the full app + 2 on the static Pages build
+make test-backend    # pytest: 62 tests (model maths, dynamics, projection, Taylor, FFT, inverse bounds, training, API, real-data validation)
+make test-frontend   # tsc + vitest: 35 tests (projection and DFT twins vs Python fixtures, sliders, controller, playback, validation report, tab keys)
+make test-e2e        # Playwright: 10 scenarios on the full app + 4 on the static Pages build
 make test            # all of the above
 ```
 
@@ -60,13 +63,15 @@ Playwright needs a Chromium once: `cd frontend && npx playwright install chromiu
 * **Mathematics** — local Taylor analysis of a receptor response (autograd gradient + selected Hessian, finite-difference check, 1-D and 2-D error maps), dose–response curves vs teacher.
 * **Inverse design** — choose a target odor, optionally drag it in 3-D (minimum-norm lift `Δz = P⁺Δp`), restrict allowed compounds and the maximum number of components (API: 1–5, default 5; UI default 3, adjustable up to 5), run bounded multi-start optimization; candidates, distances, convergence, non-uniqueness and out-of-distribution warnings.
 * **Dataset / Model** — provenance, splits, missing-label handling, import schema, architecture, configuration, evaluated metrics and training curves.
+* **Validation (אימות מדעי)** — the pre-registered Keller 2016 benchmark: noise ceilings, per-descriptor dot plot (OSE vs. the best baseline, with 95 % CIs), hypothesis verdicts, dose test, scaffold vs. random split, full table.
 
 ## Repository layout
 
 ```
 backend/app/models/        molecular_encoder, receptor_layer, olfactory_bulb, piriform_cortex, odor_embedding, olfactory_model
 backend/app/mathematics/   projection, dynamics, fourier, approximation (Taylor), optimization (inverse)
-backend/app/datasets/      synthetic teacher + generator, schema-validated importer / data sources
+backend/app/datasets/      synthetic teacher + generator, schema-validated importer, Keller 2016 loader
+backend/app/validation/    noise ceilings, features/scaffolds, folds, baselines, OSE adapter, benchmark
 backend/app/training/      trainer (losses, evaluation, checkpoints)
 backend/app/simulation/    engine (atlas, simulate, analyses), scenarios
 backend/app/api, schemas   FastAPI /api/v1 + Pydantic schemas
@@ -74,7 +79,7 @@ backend/scripts/           generate_data, train_demo, evaluate, run_ablations
 backend/tests/             pytest suite
 frontend/src/              app, components/{visualization,controls,panels,charts}, store, services, mathematics, hooks
 frontend/e2e/              Playwright scenarios + screenshots
-data/synthetic, data/examples, checkpoints/, documentation/
+data/synthetic, data/examples, data/real/keller2016 (processed, CC-BY), checkpoints/, documentation/
 ```
 
 Scientific background (Hebrew): [`OLFACTION_LITERATURE_REVIEW_HE.md`](documentation/OLFACTION_LITERATURE_REVIEW_HE.md) · Code-to-math explanation (Hebrew): [`COMPUTATION_EXPLAINED_HE.md`](documentation/COMPUTATION_EXPLAINED_HE.md). The application also includes a **מדע וחישובים** research tab.

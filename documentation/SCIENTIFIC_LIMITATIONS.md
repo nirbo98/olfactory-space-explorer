@@ -36,9 +36,23 @@ Inverse Design minimizes `‖F(c) − z_target‖² + λΩ(c)` over bounded conc
 
 `ℋ_M ⊗ ℋ_E → ℋ_R → ℋ_B → ℋ_P` names classical, finite-dimensional real feature spaces. The tensor-product notation describes how molecular identity and concentration combine; there is no quantum state, superposition or quantum algorithm anywhere in the code.
 
-## 8. Real-data validation is required before any predictive claim
+## 8. Real-data validation: one test so far, and the model fails it
 
-All reported metrics (e.g. receptor R² 0.937 on unseen mixtures, 0.860 on held-out compounds) quantify how well the student approximates a teacher that *we wrote*. They say nothing about olfactory biology. Predictive claims would require, at minimum: real receptor assays or human psychophysics imported through the schema-validated importer (`backend/app/datasets/importer.py`), proper train/test protocols on that data, calibration of uncertainty, and replication. No calibration results exist and none are claimed.
+The demo metrics (for example receptor R² 0.937 on unseen mixtures and 0.860 on held-out compounds) measure how well the student approximates a teacher that *we wrote*. They say nothing about olfactory biology.
+
+One real-data test now exists. It uses human psychophysics from Keller & Vosshall (2016): 55 subjects and 478 molecules. Molecules are split into scaffold-grouped folds, and models are compared with chemistry baselines and with a split-half noise ceiling. The hypotheses were pre-registered before the run ([`PREREGISTRATION_KELLER_HE.md`](PREREGISTRATION_KELLER_HE.md)); results are in [`VALIDATION_KELLER2016_HE.md`](VALIDATION_KELLER2016_HE.md) and in the app's **אימות מדעי** tab.
+
+Results under the scaffold split (mean r across targets):
+
+| Model | Mean r | Share of noise ceiling |
+|---|---|---|
+| Random forest on RDKit descriptors | 0.45 | 54 % |
+| Plain MLP | 0.19 | — |
+| OSE architecture | 0.10 | 11 % |
+
+The OSE architecture loses to the random forest and even to the plain MLP; in both comparisons the confidence interval of the difference excludes 0. Nothing in this repository therefore supports a claim that the biologically structured model predicts perception better than standard chemistry models.
+
+The test also leaves important parts of the model unexamined. It covers single molecules only, with no mixtures and no receptor data, so the parts of the model built for competition between molecules and for receptor responses remain untested. No uncertainty calibration has been done.
 
 ## Other caveats
 

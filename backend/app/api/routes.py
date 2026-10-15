@@ -64,14 +64,15 @@ def config(request: Request):
 @router.get("/datasets")
 def datasets(request: Request):
     e = engine(request)
-    ds = [SyntheticDataSource(e.ds).describe()]
+    real = []
     if keller.PROCESSED.exists():
-        ds.append({"id": "keller2016", "kind": "experimental", "provenance": "human_psychophysics",
+        real.append({"id": "keller2016", "kind": "experimental", "provenance": "human_psychophysics",
                    "label": "REAL HUMAN DATA — Keller & Vosshall 2016",
                    "label_he": "נתוני בני אדם אמיתיים — Keller & Vosshall 2016",
                    "citation": keller.CITATION, "license": keller.LICENSE, "role": "validation"})
     return {"active": "synthetic-demo",
-            "datasets": ds,
+            "datasets": [SyntheticDataSource(e.ds).describe()],
+            "validation_datasets": real,
             "experimental_import": {"schema": "app.datasets.importer.ExperimentalDataset",
                                     "example": "data/examples/experimental_dataset_template.json",
                                     "loaded": []}}

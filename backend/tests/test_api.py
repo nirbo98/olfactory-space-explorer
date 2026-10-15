@@ -107,5 +107,6 @@ def test_validation_route(client, monkeypatch, tmp_path):
     (tmp_path / "v.json").write_text('{"schema": "ose.validation.v1"}')
     monkeypatch.setattr(routes, "VALIDATION_PATH", tmp_path / "v.json")
     assert client.get("/api/v1/validation").json()["schema"] == "ose.validation.v1"
-    ids = [d["id"] for d in client.get("/api/v1/datasets").json()["datasets"]]
-    assert ids[0] == "synthetic-demo"
+    body = client.get("/api/v1/datasets").json()
+    assert [d["id"] for d in body["datasets"]] == ["synthetic-demo"]
+    assert [d["id"] for d in body["validation_datasets"]] == ["keller2016"]
