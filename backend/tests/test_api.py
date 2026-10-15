@@ -98,3 +98,14 @@ def test_inverse_component_limit_is_enforced(client):
     ok = client.post("/api/v1/inverse-design", json={**base, "max_components": 5})
     assert ok.status_code == 200
     assert all(len(c["components"]) <= 5 for c in ok.json()["candidates"])
+
+
+def test_validation_route(client, monkeypatch, tmp_path):
+    from app.api import routes
+    monkeypatch.setattr(routes, "VALIDATION_PATH", tmp_path / "missing.json")
+    assert client.get("/api/v1/validation").status_code == 404
+    (tmp_path / "v.json").write_text('{"schema": "ose.validation.v1"}')
+    monkeypatch.setattr(routes, "VALIDATION_PATH", tmp_path / "v.json")
+    assert client.get("/api/v1/validation").json()["schema"] == "ose.validation.v1"
+    ids = [d["id"] for d in client.get("/api/v1/datasets").json()["datasets"]]
+    assert ids[0] == "synthetic-demo"

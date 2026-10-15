@@ -9,6 +9,7 @@
 python scripts/export_static.py
 """
 import json
+import sys
 from pathlib import Path
 
 import _path  # noqa: F401
@@ -57,8 +58,20 @@ def export_onnx(engine: OlfactoryEngine) -> None:
                       dynamic_axes={"features": {1: "N"}, "conc_t": {2: "N"}, "mask": {1: "N"}}, **common)
 
 
+def export_validation(req) -> None:
+    """Real-data benchmark results (checkpoints/keller-benchmark.json), when present."""
+    if routes.VALIDATION_PATH.exists():
+        dump("validation.json", routes.validation())
+    else:
+        print("no validation results; run `make fetch-real benchmark` to include them")
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
+    if "--validation-only" in sys.argv:
+        dump("datasets.json", routes.datasets(_Req(OlfactoryEngine())))
+        export_validation(None)
+        return
     torch.set_num_threads(2)
     e = OlfactoryEngine()
     if e.status != "trained":
@@ -73,6 +86,7 @@ def main() -> None:
     dump("atlas.json", e.atlas_json)
     dump("compounds.json", routes.compounds(req))
     dump("datasets.json", routes.datasets(req))
+    export_validation(req)
     dump("metrics.json", routes.metrics(req))
     dump("features.json", _r(e.features.numpy(), 6))
     t, dt = time_grid(TOTAL, FRAMES)

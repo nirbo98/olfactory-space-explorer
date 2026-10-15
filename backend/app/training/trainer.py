@@ -4,10 +4,11 @@ Loss (each term only when its labels exist; each normalized by a train-set scale
 
     L = λ_R L_R + λ_D L_D + λ_S L_S + λ_I L_I + λ_P L_P
 
-  L_R  receptor MSE / Var(train receptor targets)
+  L_R  receptor MSE (non-finite labels masked) / Var(train receptor targets)
   L_D  descriptor BCE (NaN labels masked) / BCE of the constant train-mean predictor
   L_S  MSE between student and teacher pairwise cosine similarity / Var(teacher sims)
-       (synthetic similarity — NOT human similarity judgments)
+       (synthetic similarity — NOT human similarity judgments; skipped when the
+       dataset has no teacher latent, e.g. real psychophysics)
   L_I  intensity MSE (NaN masked) / Var(train intensity)
   L_P  fixed-point regularizer: settled embedding after K and 2K recurrent steps
        must agree (weight decay is applied separately by AdamW)
@@ -49,15 +50,17 @@ class TensorDataset:
     receptor: torch.Tensor     # [M, R]
     descriptor: torch.Tensor   # [M, D] (NaN = missing)
     intensity: torch.Tensor    # [M]    (NaN = missing)
-    perceptual: torch.Tensor   # [M, P] teacher latent, used only to derive similarity targets
+    perceptual: torch.Tensor | None  # [M, P] teacher latent (similarity targets); None for real data
     split: np.ndarray
 
     @classmethod
     def from_dataset(cls, ds: dict) -> "TensorDataset":
         t = lambda a, dt=torch.float32: torch.as_tensor(np.asarray(a), dtype=dt)  # noqa: E731
+        perceptual = ds.get("perceptual_targets")
         return cls(t(ds["compound_features"]), t(ds["comp_idx"], torch.long), t(ds["conc"]),
                    t(ds["mask"], torch.bool), t(ds["receptor_targets"]), t(ds["descriptor_targets"]),
-                   t(ds["intensity_targets"]), t(ds["perceptual_targets"]), np.asarray(ds["split"]))
+                   t(ds["intensity_targets"]), None if perceptual is None else t(perceptual),
+                   np.asarray(ds["split"]))
 
     def batch(self, idx) -> dict:
         idx = torch.as_tensor(idx, dtype=torch.long)
@@ -66,7 +69,8 @@ class TensorDataset:
         feats = self.features[ci.clamp(min=0)] * mask[..., None]
         return {"features": feats, "conc": self.conc[idx] * mask, "mask": mask,
                 "receptor": self.receptor[idx], "descriptor": self.descriptor[idx],
-                "intensity": self.intensity[idx], "perceptual": self.perceptual[idx]}
+                "intensity": self.intensity[idx],
+                "perceptual": None if self.perceptual is None else self.perceptual[idx]}
 
     def indices(self, *splits: str) -> np.ndarray:
         return np.where(np.isin(self.split, splits))[0]
@@ -84,17 +88,34 @@ def compute_norms(data: TensorDataset, train_idx) -> dict:
     p = torch.nanmean(d, dim=0).clamp(1e-4, 1 - 1e-4)
     base_bce = F.binary_cross_entropy(p.expand_as(d)[m], d[m]).item()
     iv = b["intensity"][~torch.isnan(b["intensity"])]
-    S = _cos_matrix(b["perceptual"])
-    tri = torch.triu_indices(len(S), len(S), 1)
-    return {"receptor_var": b["receptor"].var().item(), "descriptor_bce": base_bce,
-            "intensity_var": iv.var().item(), "similarity_var": S[tri[0], tri[1]].var().item(),
-            "receptor_train_mean": b["receptor"].mean(0).tolist()}
+    r = b["receptor"]
+    rm = torch.isfinite(r)
+    norms = {"receptor_var": r[rm].var().item() if rm.sum() > 1 else math.nan, "descriptor_bce": base_bce,
+             "intensity_var": iv.var().item() if len(iv) > 1 else math.nan, "similarity_var": math.nan,
+             "receptor_train_mean": torch.nanmean(r, dim=0).tolist()}
+    if b["perceptual"] is not None:
+        S = _cos_matrix(b["perceptual"])
+        tri = torch.triu_indices(len(S), len(S), 1)
+        norms["similarity_var"] = S[tri[0], tri[1]].var().item()
+    return norms
+
+
+def _masked_mse(pred: torch.Tensor, target: torch.Tensor):
+    """MSE over finite targets; identical to F.mse_loss when every label is observed."""
+    m = torch.isfinite(target)
+    if bool(m.all()):
+        return F.mse_loss(pred, target)
+    if not bool(m.any()):
+        return None
+    return F.mse_loss(pred[m], target[m])
 
 
 def compute_losses(model, batch: dict, norms: dict, tc: TrainConfig, fixed_point: bool = True):
     out = model(batch["features"], batch["conc"], batch["mask"], compute_fixed_point=fixed_point)
     losses = {}
-    losses["receptor"] = F.mse_loss(out.receptor_activities, batch["receptor"]) / norms["receptor_var"]
+    rec = _masked_mse(out.receptor_activities, batch["receptor"])
+    if rec is not None:
+        losses["receptor"] = rec / norms["receptor_var"]
     d, dm = batch["descriptor"], ~torch.isnan(batch["descriptor"])
     if dm.any():
         losses["descriptor"] = F.binary_cross_entropy(out.descriptor_predictions[dm].clamp(1e-6, 1 - 1e-6),
@@ -102,7 +123,7 @@ def compute_losses(model, batch: dict, norms: dict, tc: TrainConfig, fixed_point
     im = ~torch.isnan(batch["intensity"])
     if im.any():
         losses["intensity"] = F.mse_loss(out.intensity_prediction[im], batch["intensity"][im]) / norms["intensity_var"]
-    if len(batch["perceptual"]) > 1:
+    if batch["perceptual"] is not None and len(batch["perceptual"]) > 1:
         tri = torch.triu_indices(len(batch["perceptual"]), len(batch["perceptual"]), 1)
         s_t = _cos_matrix(batch["perceptual"])[tri[0], tri[1]]
         s_p = (out.similarity_projection @ out.similarity_projection.T)[tri[0], tri[1]]
@@ -124,19 +145,22 @@ def evaluate(model, data: TensorDataset, idx, norms: dict, tc: TrainConfig) -> d
     model.eval()
     b = data.batch(idx)
     total, parts, out = compute_losses(model, b, norms, tc)
+    m = {"n": int(len(idx)), "loss": float(total), "loss_terms": parts}
     r_p, r_t = out.receptor_activities.numpy(), b["receptor"].numpy()
-    base = np.asarray(norms["receptor_train_mean"])
-    ss_res = ((r_p - r_t) ** 2).sum()
-    ss_tot = ((r_t - r_t.mean(0)) ** 2).sum()
-    m = {
-        "n": int(len(idx)),
-        "loss": float(total),
-        "loss_terms": parts,
-        "receptor_mae": float(np.abs(r_p - r_t).mean()),
-        "receptor_rmse": float(np.sqrt(((r_p - r_t) ** 2).mean())),
-        "receptor_r2": float(1 - ss_res / ss_tot),
-        "receptor_mae_mean_baseline": float(np.abs(base[None] - r_t).mean()),
-    }
+    rm = np.isfinite(r_t)
+    if rm.all():
+        base = np.asarray(norms["receptor_train_mean"])
+        ss_res = ((r_p - r_t) ** 2).sum()
+        ss_tot = ((r_t - r_t.mean(0)) ** 2).sum()
+        m.update({
+            "receptor_mae": float(np.abs(r_p - r_t).mean()),
+            "receptor_rmse": float(np.sqrt(((r_p - r_t) ** 2).mean())),
+            "receptor_r2": float(1 - ss_res / ss_tot),
+            "receptor_mae_mean_baseline": float(np.abs(base[None] - r_t).mean()),
+        })
+    elif rm.any():
+        m["receptor_mae"] = float(np.abs(r_p[rm] - r_t[rm]).mean())
+        m["receptor_labels_available"] = int(rm.sum())
     d_t, d_p = b["descriptor"].numpy(), out.descriptor_predictions.numpy()
     dm = ~np.isnan(d_t)
     if dm.any():
@@ -154,7 +178,7 @@ def evaluate(model, data: TensorDataset, idx, norms: dict, tc: TrainConfig) -> d
     if im.sum() > 2:
         m["intensity_mae"] = float(np.abs(i_p[im] - i_t[im]).mean())
         m["intensity_pearson"] = float(pearsonr(i_p[im], i_t[im])[0])
-    if len(idx) > 2:
+    if b["perceptual"] is not None and len(idx) > 2:
         tri = np.triu_indices(len(idx), 1)
         s_t = _cos_matrix(b["perceptual"]).numpy()[tri]
         u = out.similarity_projection.numpy()
@@ -196,14 +220,15 @@ def train(ds: dict, mc: ModelConfig | None = None, tc: TrainConfig | None = None
             run += float(loss.detach()); nb += 1
         val = evaluate(model, data, va, norms, tc)
         history.append({"epoch": epoch, "train_loss": run / max(nb, 1), "val_loss": val["loss"],
-                        "val_receptor_mae": val["receptor_mae"]})
+                        "val_receptor_mae": val.get("receptor_mae")})
         if val["loss"] < best - 1e-5:
             best, best_state, best_epoch, bad = val["loss"], copy.deepcopy(model.state_dict()), epoch, 0
         else:
             bad += 1
         if epoch % 10 == 0 or bad == 0 and epoch % 5 == 0:
-            log(f"epoch {epoch:4d}  train {run / max(nb, 1):.4f}  val {val['loss']:.4f}  "
-                f"val receptor MAE {val['receptor_mae']:.4f}  ({time.time() - t0:.0f}s)")
+            rmae = f"  val receptor MAE {val['receptor_mae']:.4f}" if "receptor_mae" in val else ""
+            log(f"epoch {epoch:4d}  train {run / max(nb, 1):.4f}  val {val['loss']:.4f}{rmae}  "
+                f"({time.time() - t0:.0f}s)")
         if bad >= tc.patience:
             log(f"early stopping at epoch {epoch} (best epoch {best_epoch})")
             break
@@ -225,8 +250,8 @@ def train(ds: dict, mc: ModelConfig | None = None, tc: TrainConfig | None = None
         "best_epoch": best_epoch,
         "epochs_run": len(history),
         "training_seconds": round(time.time() - t0, 1),
-        "dataset": {"provenance": ds["provenance"], "seed": int(ds["seed"]),
-                    "heldout_compounds": list(ds["heldout_compounds"]),
+        "dataset": {"provenance": ds["provenance"], "seed": int(ds.get("seed", tc.seed)),
+                    "heldout_compounds": list(ds.get("heldout_compounds", [])),
                     "split_counts": {s: int((data.split == s).sum()) for s in np.unique(data.split)}},
         "state_dict": model.state_dict(),
     }

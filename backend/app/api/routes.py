@@ -1,10 +1,13 @@
 """Versioned REST API: /api/v1."""
 from __future__ import annotations
 
+import json
+
 import numpy as np
 from fastapi import APIRouter, HTTPException, Query, Request
 
-from ..config import MAX_TRAINING_CONCENTRATION, MODEL_VERSION
+from ..config import CHECKPOINT_DIR, MAX_TRAINING_CONCENTRATION, MODEL_VERSION
+from ..datasets import keller
 from ..datasets.importer import SyntheticDataSource
 from ..mathematics.projection import lift_displacement
 from ..schemas.api import (DoseResponseRequest, FourierRequest, InverseDesignRequest, ProjectRequest,
@@ -61,11 +64,28 @@ def config(request: Request):
 @router.get("/datasets")
 def datasets(request: Request):
     e = engine(request)
+    ds = [SyntheticDataSource(e.ds).describe()]
+    if keller.PROCESSED.exists():
+        ds.append({"id": "keller2016", "kind": "experimental", "provenance": "human_psychophysics",
+                   "label": "REAL HUMAN DATA — Keller & Vosshall 2016",
+                   "label_he": "נתוני בני אדם אמיתיים — Keller & Vosshall 2016",
+                   "citation": keller.CITATION, "license": keller.LICENSE, "role": "validation"})
     return {"active": "synthetic-demo",
-            "datasets": [SyntheticDataSource(e.ds).describe()],
+            "datasets": ds,
             "experimental_import": {"schema": "app.datasets.importer.ExperimentalDataset",
                                     "example": "data/examples/experimental_dataset_template.json",
                                     "loaded": []}}
+
+
+VALIDATION_PATH = CHECKPOINT_DIR / "keller-benchmark.json"
+
+
+@router.get("/validation")
+def validation():
+    """Benchmark against real human psychophysics (precomputed by scripts/run_benchmark.py)."""
+    if not VALIDATION_PATH.exists():
+        raise HTTPException(status_code=404, detail="no validation results — run `make fetch-real benchmark`")
+    return json.loads(VALIDATION_PATH.read_text())
 
 
 @router.get("/samples")

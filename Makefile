@@ -1,5 +1,6 @@
 # Olfactory Space Explorer — project commands (run at repository root).
-PY          ?= python3
+# Prefer the project virtualenv (backend/.venv) when it exists.
+PY          ?= $(if $(wildcard backend/.venv/bin/python),$(abspath backend/.venv/bin/python),python3)
 PIP         ?= $(PY) -m pip
 TORCH_INDEX ?= https://download.pytorch.org/whl/cpu
 BACKEND     := backend
@@ -7,13 +8,15 @@ FRONTEND    := frontend
 
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap install install-backend install-frontend data train evaluate ablations \
-        export-static pages backend frontend dev build test test-backend test-frontend test-e2e clean
+        export-static pages fetch-real benchmark export-validation backend frontend dev build test test-backend test-frontend test-e2e clean
 
 help:
 	@echo "make bootstrap       install dependencies, generate data, train demo model"
 	@echo "make dev             run API on :8000 and frontend on :5173"
 	@echo "make test            backend + frontend + end-to-end tests"
 	@echo "make export-static   export ONNX and static assets (optional export deps)"
+	@echo "make fetch-real      download + verify Keller & Vosshall 2016 (real human ratings)"
+	@echo "make benchmark       validate against real data → checkpoints/keller-benchmark.json"
 
 bootstrap: install data train
 	@echo "Ready. Run 'make dev' and open http://127.0.0.1:5173"
@@ -22,7 +25,7 @@ install: install-backend install-frontend
 
 install-backend:
 	$(PIP) install "torch>=2.5" --index-url $(TORCH_INDEX) || $(PIP) install "torch>=2.5"
-	$(PIP) install -e "$(BACKEND)[dev]"
+	$(PIP) install -e "$(BACKEND)[dev,chem]"
 
 install-frontend:
 	cd $(FRONTEND) && npm ci
@@ -41,6 +44,15 @@ ablations:
 
 export-static:
 	cd $(BACKEND) && $(PY) scripts/export_static.py
+
+fetch-real:
+	cd $(BACKEND) && $(PY) scripts/fetch_keller.py
+
+benchmark:
+	cd $(BACKEND) && $(PY) scripts/run_benchmark.py
+
+export-validation:
+	cd $(BACKEND) && $(PY) scripts/export_static.py --validation-only
 
 pages:
 	cd $(FRONTEND) && npm run build:pages && npx vite preview --mode pages --host 127.0.0.1 --port 4173
